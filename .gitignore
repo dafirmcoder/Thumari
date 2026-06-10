@@ -1,0 +1,7 @@
+venv/
+*.pyc
+__pycache__/
+*.sqlite3
+.env
+.DS_Store
+media/site_assets/
