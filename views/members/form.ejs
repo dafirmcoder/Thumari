@@ -1,0 +1,60 @@
+<%- include('../partials/head.ejs', { title: 'Register Member' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="max-width: 600px; margin: 1.5rem auto;">
+  <div class="card">
+    <div class="card-title">
+      <span>Register New Member</span>
+      <a href="/members" style="font-size: 0.85rem;">Back to List</a>
+    </div>
+
+    <form action="/members" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="firstName">First Name *</label>
+          <input type="text" id="firstName" name="firstName" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lastName">Last Name *</label>
+          <input type="text" id="lastName" name="lastName" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" class="form-control" placeholder="+255...">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="form-control">
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="nationalId">National ID / NIDA</label>
+          <input type="text" id="nationalId" name="nationalId" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="joinDate">Join Date</label>
+          <input type="date" id="joinDate" name="joinDate" class="form-control" value="<%= toDateInput(new Date()) %>">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Notes / Background</label>
+        <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <a href="/members" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

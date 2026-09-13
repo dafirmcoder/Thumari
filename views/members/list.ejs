@@ -1,0 +1,68 @@
+<%- include('../partials/head.ejs', { title: 'Members' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Group Members</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">All registered SACCO / Chama members</p>
+  </div>
+
+  <% if (['admin', 'secretary'].includes(currentUser.role)) { %>
+    <a href="/members/new" class="btn btn-primary btn-sm">+ Register Member</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <form method="GET" action="/members" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+    <input type="text" name="search" class="form-control" placeholder="Search by name, member number, or phone..." value="<%= search || '' %>" style="max-width: 400px;">
+    <select name="status" class="form-control" style="max-width: 180px;">
+      <option value="all" <%= status === 'all' ? 'selected' : '' %>>All Statuses</option>
+      <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+      <option value="dormant" <%= status === 'dormant' ? 'selected' : '' %>>Dormant</option>
+      <option value="exited" <%= status === 'exited' ? 'selected' : '' %>>Exited</option>
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+  </form>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Member No</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Savings Balance</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (members.length === 0) { %>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted);">No members found.</td>
+          </tr>
+        <% } %>
+        <% for (const m of members) { %>
+          <tr>
+            <td><strong><%= m.memberNo %></strong></td>
+            <td><a href="/members/<%= m.id %>"><%= m.firstName %> <%= m.lastName %></a></td>
+            <td><%= m.phone || '—' %></td>
+            <td>
+              <span class="badge" style="background: <%= m.status === 'active' ? '#10b981' : '#f59e0b' %>;">
+                <%= m.status %>
+              </span>
+            </td>
+            <td style="color: #34d399; font-weight: 600;"><%= formatMoney(m.totalSavingsCents) %></td>
+            <td><%= formatDate(m.joinDate) %></td>
+            <td>
+              <a href="/members/<%= m.id %>" class="btn btn-secondary btn-sm">Profile</a>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

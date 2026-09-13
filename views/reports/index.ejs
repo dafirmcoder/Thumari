@@ -1,0 +1,48 @@
+<%- include('../partials/head.ejs', { title: 'Financial Reports' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Financial Reports & Portfolio</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Savings distribution, share capital, and loan portfolio metrics</p>
+  </div>
+
+  <button onclick="window.print()" class="btn btn-secondary btn-sm">🖨️ Print Report</button>
+</div>
+
+<div class="card">
+  <div class="card-title">Savings & Capital Breakdown by Product</div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Product / Fund</th>
+          <th>Category</th>
+          <th>Total Transactions</th>
+          <th>Total Accumulated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% let grandTotal = 0; %>
+        <% for (const item of savingsByProduct) { %>
+          <% grandTotal += item.totalCents; %>
+          <tr>
+            <td><strong><%= item.typeName %></strong></td>
+            <td><span class="badge" style="background: #334155;"><%= item.kind.toUpperCase() %></span></td>
+            <td><%= item.count %> deposits</td>
+            <td style="color: #34d399; font-weight: 700;"><%= formatMoney(item.totalCents) %></td>
+          </tr>
+        <% } %>
+      </tbody>
+      <tfoot>
+        <tr style="border-top: 2px solid var(--border-color); font-size: 1.1rem;">
+          <th colspan="3" style="text-align: right;">Grand Total:</th>
+          <th style="color: #38bdf8;"><%= formatMoney(grandTotal) %></th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

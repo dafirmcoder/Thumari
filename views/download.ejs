@@ -1,0 +1,58 @@
+<%- include('partials/head.ejs', { title: 'Download Android App' }) %>
+<%- include('partials/nav.ejs') %>
+
+<div style="max-width: 720px; margin: 2rem auto;">
+  <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
+    <img src="/static/icons/icon-192.png" alt="Thumari App" width="96" height="96" style="border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); margin-bottom: 1rem;">
+    
+    <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #38bdf8;"><%= org.name %> Mobile App</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 500px; margin: 0 auto 1.5rem auto;">
+      Experience lightning-fast SACCO operations, offline account access, and instant payment push notifications on your Android device.
+    </p>
+
+    <!-- Download CTA Buttons -->
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+      <a href="<%= apkUrl %>" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1.1rem; border-radius: 0.5rem;">
+        📥 Download Android APK (Direct)
+      </a>
+      <button onclick="triggerPwaInstall()" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1.1rem; border-radius: 0.5rem;">
+        🌐 Install as Web PWA
+      </button>
+    </div>
+
+    <!-- Features Badges -->
+    <div class="grid grid-3" style="text-align: left; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+      <div style="background: #0f172a; padding: 1rem; border-radius: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔔</div>
+        <strong>Push Notifications</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Get real-time transaction receipts, loan approvals, and meeting notices.</div>
+      </div>
+
+      <div style="background: #0f172a; padding: 1rem; border-radius: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚡</div>
+        <strong>Offline Ready</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Review your savings balance and schedules even without internet connectivity.</div>
+      </div>
+
+      <div style="background: #0f172a; padding: 1rem; border-radius: 0.5rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔒</div>
+        <strong>Bank-Grade Security</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Encrypted sessions and scrypt authentication protecting your financial records.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Android Installation Guide -->
+  <div class="card">
+    <div class="card-title">How to Install the APK on Android</div>
+    <ol style="color: var(--text-muted); line-height: 1.8; padding-left: 1.25rem; margin: 0;">
+      <li>Tap <strong>Download Android APK</strong> above to download <code>thumari.apk</code>.</li>
+      <li>When prompted by your browser, tap <strong>Download anyway</strong>.</li>
+      <li>Open the downloaded file from your notifications bar or Downloads folder.</li>
+      <li>If prompted, enable <em>"Allow installation from this source"</em> in Settings.</li>
+      <li>Tap <strong>Install</strong> and open the Thumari app on your home screen!</li>
+    </ol>
+  </div>
+</div>
+
+<%- include('partials/foot.ejs') %>

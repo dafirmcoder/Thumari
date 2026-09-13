@@ -1,0 +1,56 @@
+<%- include('../partials/head.ejs', { title: 'Contributions' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Contributions Ledger</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Savings, Welfare, and Share Capital collections</p>
+  </div>
+
+  <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+    <a href="/contributions/new" class="btn btn-primary btn-sm">+ Record Contribution</a>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Member</th>
+          <th>Product / Type</th>
+          <th>Period</th>
+          <th>Method</th>
+          <th>Amount</th>
+          <th>Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (contributions.length === 0) { %>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted);">No contributions found.</td>
+          </tr>
+        <% } %>
+        <% for (const c of contributions) { %>
+          <tr>
+            <td><%= formatDate(c.paidAt) %></td>
+            <td>
+              <strong><%= c.memberName %></strong>
+              <div style="font-size: 0.75rem; color: var(--text-muted);"><%= c.memberNo %></div>
+            </td>
+            <td><%= c.typeName %></td>
+            <td><%= c.period || '—' %></td>
+            <td><span class="badge" style="background: #334155;"><%= c.method.toUpperCase() %></span></td>
+            <td style="color: #34d399; font-weight: 700;"><%= formatMoney(c.amountCents) %></td>
+            <td>
+              <a href="/contributions/<%= c.id %>/receipt" class="btn btn-secondary btn-sm">Receipt</a>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

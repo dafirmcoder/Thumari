@@ -1,0 +1,163 @@
+<%- include('../partials/head.ejs', { title: 'Loan ' + loan.loanNo }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);">
+      <%= product.name %> &bull; <%= member.firstName %> <%= member.lastName %> (<%= member.memberNo %>)
+    </div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Loan <%= loan.loanNo %></h1>
+  </div>
+
+  <div>
+    <span class="badge" style="font-size: 1rem; padding: 0.35rem 0.75rem; background: <%= loan.status === 'disbursed' ? '#10b981' : loan.status === 'approved' ? '#0284c7' : loan.status === 'pending' ? '#f59e0b' : '#64748b' %>;">
+      <%= loan.status.toUpperCase() %>
+    </span>
+  </div>
+</div>
+
+<!-- Loan Summary KPI -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+  <div class="stat-box">
+    <div class="stat-label">Principal</div>
+    <div class="stat-value"><%= formatMoney(loan.principalCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Payable</div>
+    <div class="stat-value" style="font-size: 1.25rem;"><%= formatMoney(loan.totalPayableCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Outstanding Balance</div>
+    <div class="stat-value" style="color: <%= loan.outstandingCents > 0 ? '#38bdf8' : '#34d399' %>;">
+      <%= formatMoney(loan.outstandingCents) %>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Interest & Term</div>
+    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);">
+      <%= (loan.interestRateBps / 100).toFixed(1) %>%/mo &bull; <%= loan.termMonths %> mos
+    </div>
+  </div>
+</div>
+
+<!-- Officer Actions -->
+<% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+  <div class="card" style="border: 1px solid var(--primary); background: rgba(2, 132, 199, 0.05);">
+    <div class="card-title" style="margin-bottom: 0.75rem;">Loan Officer Actions</div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <% if (loan.status === 'pending') { %>
+        <form action="/loans/<%= loan.id %>/approve" method="POST" style="margin: 0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-primary btn-sm">✅ Approve Application</button>
+        </form>
+        <form action="/loans/<%= loan.id %>/reject" method="POST" style="margin: 0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-danger btn-sm">❌ Reject Application</button>
+        </form>
+      <% } else if (loan.status === 'approved') { %>
+        <form action="/loans/<%= loan.id %>/disburse" method="POST" style="display: flex; gap: 0.5rem; align-items: center; margin: 0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="date" name="firstDueDate" class="form-control" style="width: auto; padding: 0.35rem 0.5rem;" value="<%= toDateInput(new Date(Date.now() + 30*86400000)) %>" required>
+          <button type="submit" class="btn btn-success btn-sm">💰 Disburse Funds & Generate Schedule</button>
+        </form>
+      <% } else if (loan.status === 'disbursed') { %>
+        <!-- Record Repayment Form -->
+        <form action="/loans/<%= loan.id %>/repay" method="POST" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="text" name="amount" class="form-control" placeholder="Repayment Amount" style="width: 180px; padding: 0.35rem 0.5rem;" required>
+          <select name="method" class="form-control" style="width: 120px; padding: 0.35rem 0.5rem;">
+            <option value="mpesa">M-Pesa</option>
+            <option value="cash">Cash</option>
+            <option value="bank">Bank</option>
+          </select>
+          <input type="text" name="reference" class="form-control" placeholder="Receipt / Ref" style="width: 150px; padding: 0.35rem 0.5rem;">
+          <button type="submit" class="btn btn-primary btn-sm">💵 Record Repayment</button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- Installment Schedule -->
+<div class="card">
+  <div class="card-title">
+    <span>Installment Repayment Schedule</span>
+  </div>
+
+  <% if (schedule.length === 0) { %>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">Installment schedule will be generated upon loan disbursement.</p>
+  <% } else { %>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Due Date</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Total Due</th>
+            <th>Paid</th>
+            <th>Penalties</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const s of schedule) { %>
+            <tr>
+              <td><%= s.installmentNo %></td>
+              <td><%= formatDate(s.dueDate) %></td>
+              <td><%= formatMoney(s.principalCents) %></td>
+              <td><%= formatMoney(s.interestCents) %></td>
+              <td><strong><%= formatMoney(s.totalCents) %></strong></td>
+              <td style="color: #34d399;"><%= formatMoney(s.paidCents) %></td>
+              <td style="color: <%= s.penaltyCents > 0 ? '#f87171' : 'var(--text-muted)' %>;">
+                <%= formatMoney(s.penaltyCents) %>
+              </td>
+              <td>
+                <span class="badge" style="background: <%= s.status === 'paid' ? '#10b981' : s.status === 'partial' ? '#0284c7' : s.status === 'overdue' ? '#ef4444' : '#64748b' %>;">
+                  <%= s.status.toUpperCase() %>
+                </span>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<!-- Repayment History -->
+<% if (repayments.length > 0) { %>
+  <div class="card">
+    <div class="card-title">
+      <span>Repayment Transactions</span>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount Paid</th>
+            <th>Method</th>
+            <th>Reference</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const r of repayments) { %>
+            <tr>
+              <td><%= formatDate(r.paidAt) %></td>
+              <td style="color: #34d399; font-weight: 700;"><%= formatMoney(r.amountCents) %></td>
+              <td><span class="badge" style="background: #334155;"><%= r.method.toUpperCase() %></span></td>
+              <td><%= r.reference || '—' %></td>
+              <td><%= r.notes || '—' %></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/foot.ejs') %>

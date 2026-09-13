@@ -1,0 +1,56 @@
+<nav class="navbar">
+  <a href="/dashboard" class="nav-brand">
+    <img src="/static/icons/icon-192.png" alt="Logo" width="28" height="28" style="border-radius: 6px;">
+    <span><%= org.name %></span>
+  </a>
+
+  <% if (currentUser) { %>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>">Dashboard</a>
+      <a href="/members" class="nav-link <%= currentPath.startsWith('/members') ? 'active' : '' %>">Members</a>
+      <a href="/contributions" class="nav-link <%= currentPath.startsWith('/contributions') ? 'active' : '' %>">Contributions</a>
+      <a href="/loans" class="nav-link <%= currentPath.startsWith('/loans') ? 'active' : '' %>">Loans</a>
+      <a href="/meetings" class="nav-link <%= currentPath.startsWith('/meetings') ? 'active' : '' %>">Meetings</a>
+      
+      <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+        <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">Reports</a>
+      <% } %>
+
+      <a href="/notifications" class="nav-link <%= currentPath.startsWith('/notifications') ? 'active' : '' %>">
+        🔔 Alerts
+        <% if (unreadNotificationCount > 0) { %>
+          <span class="badge"><%= unreadNotificationCount %></span>
+        <% } %>
+      </a>
+
+      <a href="/download" class="nav-link <%= currentPath === '/download' ? 'active' : '' %>">📱 App</a>
+
+      <form action="/logout" method="POST" style="margin: 0; display: inline;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+      </form>
+    </div>
+  <% } else { %>
+    <div class="nav-links">
+      <a href="/download" class="nav-link">Download App</a>
+      <a href="/login" class="btn btn-primary btn-sm">Sign In</a>
+    </div>
+  <% } %>
+</nav>
+
+<div class="container">
+  <!-- PWA Installation Banner -->
+  <div id="pwa-install-banner" class="install-banner">
+    <div>
+      <strong>Install <%= org.name %></strong>
+      <div style="font-size: 0.85rem; opacity: 0.9;">Add to your home screen for quick offline access and instant notifications.</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="triggerPwaInstall()">Install App</button>
+  </div>
+
+  <% if (flash) { %>
+    <div class="flash-alert flash-<%= flash.type %>">
+      <span><%= flash.type === 'success' ? '✅' : flash.type === 'error' ? '⚠️' : 'ℹ️' %></span>
+      <span><%= flash.message %></span>
+    </div>
+  <% } %>

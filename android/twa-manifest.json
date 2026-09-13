@@ -1,0 +1,54 @@
+{
+  "packageId": "app.thumari.twa",
+  "host": "thumari.app",
+  "name": "Thumari SACCO",
+  "launcherName": "Thumari",
+  "display": "standalone",
+  "themeColor": "#0284c7",
+  "themeColorDark": "#0f172a",
+  "navigationColor": "#0f172a",
+  "navigationColorDark": "#0f172a",
+  "navigationDividerColor": "#334155",
+  "navigationDividerColorDark": "#334155",
+  "backgroundColor": "#0f172a",
+  "enableNotifications": true,
+  "startUrl": "/dashboard",
+  "iconUrl": "https://thumari.app/static/icons/icon-512.png",
+  "maskableIconUrl": "https://thumari.app/static/icons/icon-maskable.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "thumari"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard",
+      "icon": "icon-192"
+    },
+    {
+      "name": "Contributions",
+      "short_name": "Savings",
+      "url": "/contributions",
+      "icon": "icon-192"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://thumari.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true
+}

@@ -1,0 +1,105 @@
+<%- include('../partials/head.ejs', { title: meeting.title }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);">
+      <%= formatDateTime(meeting.scheduledAt) %> &bull; Location: <%= meeting.location || 'Not specified' %>
+    </div>
+    <h1 style="margin: 0; font-size: 1.75rem;"><%= meeting.title %></h1>
+  </div>
+
+  <div>
+    <span class="badge" style="font-size: 1rem; padding: 0.35rem 0.75rem; background: <%= meeting.status === 'scheduled' ? '#0284c7' : '#10b981' %>;">
+      <%= meeting.status.toUpperCase() %>
+    </span>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 1.5rem;">
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-title">Agenda</div>
+    <div style="white-space: pre-wrap; color: var(--text-main); font-size: 0.95rem;">
+      <%= meeting.agenda || 'No formal agenda posted.' %>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-title">Meeting Details & Fines</div>
+    <p style="margin: 0 0 0.5rem 0;"><strong>Absence Penalty Fine:</strong> <span style="color: #f87171;"><%= formatMoney(meeting.absenceFineCents) %></span></p>
+    <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Members marked 'Absent' will automatically have an outstanding fine added to their ledger.</p>
+  </div>
+</div>
+
+<!-- Attendance Register -->
+<div class="card">
+  <div class="card-title">
+    <span>Member Attendance Register</span>
+  </div>
+
+  <% if (['admin', 'secretary'].includes(currentUser.role)) { %>
+    <form action="/meetings/<%= meeting.id %>/attendance" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member No</th>
+              <th>Member Name</th>
+              <th>Attendance Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% 
+              const attendanceMap = new Map();
+              for (const a of attendance) {
+                attendanceMap.set(a.memberId, a.status);
+              }
+            %>
+            <% for (const m of members) { %>
+              <% const curStatus = attendanceMap.get(m.id) || 'absent'; %>
+              <tr>
+                <td><strong><%= m.memberNo %></strong></td>
+                <td><%= m.firstName %> <%= m.lastName %></td>
+                <td>
+                  <select name="attendance_<%= m.id %>" class="form-control" style="width: auto; padding: 0.35rem 0.5rem;">
+                    <option value="present" <%= curStatus === 'present' ? 'selected' : '' %>>Present</option>
+                    <option value="absent" <%= curStatus === 'absent' ? 'selected' : '' %>>Absent (Fine Applied)</option>
+                    <option value="excused" <%= curStatus === 'excused' ? 'selected' : '' %>>Excused</option>
+                    <option value="late" <%= curStatus === 'late' ? 'selected' : '' %>>Late</option>
+                  </select>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary">Save Attendance & Issue Fines</button>
+      </div>
+    </form>
+  <% } else { %>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const a of attendance) { %>
+            <tr>
+              <td><%= a.memberFirstName %> <%= a.memberLastName %> (<%= a.memberNo %>)</td>
+              <td><span class="badge"><%= a.status.toUpperCase() %></span></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot.ejs') %>

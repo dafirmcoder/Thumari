@@ -1,0 +1,116 @@
+<%- include('partials/head.ejs', { title: 'Dashboard' }) %>
+<%- include('partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Group Dashboard</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Overview of <%= org.name %> financial activities</p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+      <a href="/contributions/new" class="btn btn-primary btn-sm">+ Record Contribution</a>
+    <% } %>
+    <a href="/loans/new" class="btn btn-secondary btn-sm">+ Apply Loan</a>
+  </div>
+</div>
+
+<!-- KPI Stat Cards -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+  <div class="stat-box">
+    <div class="stat-label">Active Members</div>
+    <div class="stat-value"><%= summary.activeMemberCount %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Group Savings</div>
+    <div class="stat-value" style="color: #34d399;"><%= formatMoney(summary.totalSavingsCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Active Loans Balance</div>
+    <div class="stat-value"><%= formatMoney(summary.totalOutstandingLoanCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Overdue Arrears</div>
+    <div class="stat-value" style="color: <%= summary.overdueInstallmentCents > 0 ? '#f87171' : '#38bdf8' %>;">
+      <%= formatMoney(summary.overdueInstallmentCents) %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <!-- Recent Contributions -->
+  <div class="card">
+    <div class="card-title">
+      <span>Recent Contributions</span>
+      <a href="/contributions" style="font-size: 0.85rem;">View All &rarr;</a>
+    </div>
+
+    <% if (recentContributions.length === 0) { %>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">No contributions recorded yet.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const c of recentContributions) { %>
+              <tr>
+                <td><strong><%= c.memberName %></strong></td>
+                <td><%= c.typeName %></td>
+                <td style="color: #34d399; font-weight: 600;"><%= formatMoney(c.amountCents) %></td>
+                <td><%= formatDate(c.paidAt) %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Recent Loans -->
+  <div class="card">
+    <div class="card-title">
+      <span>Loan Applications & Status</span>
+      <a href="/loans" style="font-size: 0.85rem;">View All &rarr;</a>
+    </div>
+
+    <% if (recentLoans.length === 0) { %>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">No active or pending loans.</p>
+    <% } else { %>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Loan No</th>
+              <th>Member</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for (const l of recentLoans) { %>
+              <tr>
+                <td><a href="/loans/<%= l.id %>"><strong><%= l.loanNo %></strong></a></td>
+                <td><%= l.memberName %></td>
+                <td><%= formatMoney(l.principalCents) %></td>
+                <td>
+                  <span class="badge" style="background: <%= l.status === 'disbursed' ? '#10b981' : l.status === 'pending' ? '#f59e0b' : '#64748b' %>;">
+                    <%= l.status %>
+                  </span>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/foot.ejs') %>

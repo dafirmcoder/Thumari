@@ -1,0 +1,58 @@
+<%- include('../partials/head.ejs', { title: 'Meetings' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">Group Meetings</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Meeting schedules, agendas, attendance & fines</p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="/fines" class="btn btn-secondary btn-sm">⚖️ Fines Ledger</a>
+    <% if (['admin', 'secretary'].includes(currentUser.role)) { %>
+      <a href="/meetings/new" class="btn btn-primary btn-sm">+ Schedule Meeting</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Meeting Title</th>
+          <th>Scheduled Date & Time</th>
+          <th>Location</th>
+          <th>Absence Fine</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (meetings.length === 0) { %>
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted);">No meetings scheduled.</td>
+          </tr>
+        <% } %>
+        <% for (const m of meetings) { %>
+          <tr>
+            <td><strong><%= m.title %></strong></td>
+            <td><%= formatDateTime(m.scheduledAt) %></td>
+            <td><%= m.location || '—' %></td>
+            <td style="color: #f87171;"><%= formatMoney(m.absenceFineCents) %></td>
+            <td>
+              <span class="badge" style="background: <%= m.status === 'scheduled' ? '#0284c7' : '#10b981' %>;">
+                <%= m.status.toUpperCase() %>
+              </span>
+            </td>
+            <td>
+              <a href="/meetings/<%= m.id %>" class="btn btn-secondary btn-sm">Attendance & Minutes</a>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>
