@@ -11,13 +11,35 @@ export interface DatabaseHandle {
   client: Client;
 }
 
-export function createDatabase(filePath: string): DatabaseHandle {
-  if (filePath !== ':memory:') {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+export function createDatabase(filePathOrUrl: string, authToken?: string): DatabaseHandle {
+  const isRemoteUrl =
+    filePathOrUrl.startsWith('libsql:') ||
+    filePathOrUrl.startsWith('http:') ||
+    filePathOrUrl.startsWith('https:');
+
+  let url: string;
+  if (isRemoteUrl || filePathOrUrl === ':memory:') {
+    url = filePathOrUrl;
+  } else if (filePathOrUrl.startsWith('file:')) {
+    url = filePathOrUrl;
+    const actualPath = url.replace(/^file:\/\//, '').replace(/^file:/, '');
+    if (actualPath && !actualPath.includes(':memory:')) {
+      try {
+        fs.mkdirSync(path.dirname(path.resolve(actualPath)), { recursive: true });
+      } catch {}
+    }
+  } else {
+    try {
+      fs.mkdirSync(path.dirname(path.resolve(filePathOrUrl)), { recursive: true });
+    } catch {}
+    url = `file:${path.resolve(filePathOrUrl)}`;
   }
 
-  const url = filePath === ':memory:' ? ':memory:' : `file:${path.resolve(filePath)}`;
-  const client = createClient({ url });
+  const token = authToken || process.env.TURSO_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
+  const client = createClient({
+    url,
+    ...(token ? { authToken: token } : {}),
+  });
   const db = drizzle(client, { schema });
 
   return { db, client };

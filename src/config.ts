@@ -9,12 +9,17 @@ try {
   // .env is optional
 }
 
+const defaultDb =
+  process.env.DATABASE_URL ||
+  (process.env.VERCEL ? '/tmp/thumari.sqlite3' : path.join(DATA_DIR, 'thumari.sqlite3'));
+
 const configSchema = z.object({
   env: z.enum(['development', 'test', 'production']).default('development'),
   port: z.coerce.number().int().default(3000),
   host: z.string().default('0.0.0.0'),
   publicBaseUrl: z.string().default('http://localhost:3000'),
-  databaseFile: z.string().default(path.join(DATA_DIR, 'thumari.sqlite3')),
+  databaseFile: z.string().default(defaultDb),
+  databaseAuthToken: z.string().optional(),
   sessionSecret: z.string().min(16).default('development-session-secret-must-be-changed-in-production-12345'),
   org: z.object({
     name: z.string().default("Thumari Men's Association"),
@@ -34,6 +39,12 @@ const configSchema = z.object({
     certFingerprints: z.array(z.string()).default([]),
     apkUrl: z.string().default('/static/downloads/thumari.apk'),
   }),
+  supabase: z.object({
+    url: z.string().optional().default(''),
+    anonKey: z.string().optional().default(''),
+    serviceRoleKey: z.string().optional().default(''),
+    storageBucket: z.string().default('thumari-uploads'),
+  }).optional(),
 });
 
 export type AppConfig = z.infer<typeof configSchema>;
@@ -51,7 +62,8 @@ export function loadConfig(envOverrides?: Record<string, string | undefined>): A
     port: env.PORT,
     host: env.HOST,
     publicBaseUrl: env.PUBLIC_BASE_URL,
-    databaseFile: env.DATABASE_FILE,
+    databaseFile: env.DATABASE_URL || env.DATABASE_FILE || defaultDb,
+    databaseAuthToken: env.DATABASE_AUTH_TOKEN || env.TURSO_AUTH_TOKEN,
     sessionSecret: env.SESSION_SECRET,
     org: {
       name: env.ORG_NAME,
@@ -70,6 +82,12 @@ export function loadConfig(envOverrides?: Record<string, string | undefined>): A
       packageName: env.ANDROID_PACKAGE_NAME,
       certFingerprints,
       apkUrl: env.ANDROID_APK_URL,
+    },
+    supabase: {
+      url: env.SUPABASE_URL || '',
+      anonKey: env.SUPABASE_ANON_KEY || '',
+      serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY || '',
+      storageBucket: env.SUPABASE_STORAGE_BUCKET || 'thumari-uploads',
     },
   });
 }

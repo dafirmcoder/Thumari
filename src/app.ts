@@ -43,7 +43,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   config: AppConfig;
 }> {
   const config = loadConfig(options.configOverrides);
-  const handle = options.dbHandle ?? createDatabase(config.databaseFile);
+  const handle = options.dbHandle ?? createDatabase(config.databaseFile, config.databaseAuthToken);
   const queue = new NotificationQueue(handle.db);
 
   configureWebPush(config);

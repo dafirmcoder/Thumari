@@ -16,5 +16,5 @@
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "api/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
 }
