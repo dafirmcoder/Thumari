@@ -23,13 +23,18 @@ async function getFastifyApp() {
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     const app = await getFastifyApp();
-    app.server.emit('request', req, res);
+    await new Promise<void>((resolve, reject) => {
+      res.on('finish', resolve);
+      res.on('close', resolve);
+      res.on('error', reject);
+      app.server.emit('request', req, res);
+    });
   } catch (err: any) {
     console.error('Vercel Serverless Invocation Error:', err);
     if (!res.headersSent) {
       res.statusCode = 500;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.end(`<h1>500 - Serverless Function Error</h1><p>${err?.message || 'Function invocation failed'}</p>`);
+      res.end(`<h1>500 - Serverless Function Error</h1><p>${err?.message || 'Function invocation failed'}</p><pre>${err?.stack || ''}</pre>`);
     }
   }
 }

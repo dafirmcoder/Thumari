@@ -82,6 +82,13 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   });
 
   // Serve static files from /static/
+  try {
+    const fs = await import('node:fs');
+    if (!fs.existsSync(PUBLIC_DIR)) {
+      fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+    }
+  } catch {}
+
   await app.register(fastifyStatic, {
     root: PUBLIC_DIR,
     prefix: '/static/',
