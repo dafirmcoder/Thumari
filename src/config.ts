@@ -10,8 +10,21 @@ try {
   // .env is optional
 }
 
+function isSupportedDatabaseTarget(value: string | undefined): boolean {
+  return Boolean(value && (
+    value.startsWith('libsql:') ||
+    value.startsWith('http:') ||
+    value.startsWith('https:') ||
+    value.startsWith('file:')
+  ));
+}
+
+function resolveDatabaseTarget(env: Record<string, string | undefined>): string | undefined {
+  return isSupportedDatabaseTarget(env.DATABASE_URL) ? env.DATABASE_URL : env.DATABASE_FILE;
+}
+
 const defaultDb =
-  process.env.DATABASE_URL ||
+  resolveDatabaseTarget(process.env) ||
   (process.env.VERCEL ? '/tmp/thumari.sqlite3' : path.join(DATA_DIR, 'thumari.sqlite3'));
 
 const configSchema = z.object({
@@ -63,7 +76,7 @@ export function loadConfig(envOverrides?: Record<string, string | undefined>): A
     port: env.PORT,
     host: env.HOST,
     publicBaseUrl: env.PUBLIC_BASE_URL,
-    databaseFile: env.DATABASE_URL || env.DATABASE_FILE || defaultDb,
+    databaseFile: resolveDatabaseTarget(env) || defaultDb,
     databaseAuthToken: env.DATABASE_AUTH_TOKEN || env.TURSO_AUTH_TOKEN,
     sessionSecret: env.SESSION_SECRET,
     org: {
