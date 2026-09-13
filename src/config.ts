@@ -20,7 +20,14 @@ function isSupportedDatabaseTarget(value: string | undefined): boolean {
 }
 
 function resolveDatabaseTarget(env: Record<string, string | undefined>): string | undefined {
-  return isSupportedDatabaseTarget(env.DATABASE_URL) ? env.DATABASE_URL : env.DATABASE_FILE;
+  if (isSupportedDatabaseTarget(env.DATABASE_URL)) return env.DATABASE_URL;
+
+  const configuredFile = env.DATABASE_FILE;
+  if (env.VERCEL && configuredFile && !path.isAbsolute(configuredFile) && !configuredFile.startsWith('file:')) {
+    return undefined;
+  }
+
+  return configuredFile;
 }
 
 const defaultDb =
@@ -65,6 +72,9 @@ export type AppConfig = z.infer<typeof configSchema>;
 
 export function loadConfig(envOverrides?: Record<string, string | undefined>): AppConfig {
   const env = envOverrides ?? process.env;
+  const databaseTarget = resolveDatabaseTarget(env) || (
+    env.VERCEL ? '/tmp/thumari.sqlite3' : defaultDb
+  );
 
   const fingerprintsRaw = env.ANDROID_CERT_FINGERPRINTS ?? '';
   const certFingerprints = fingerprintsRaw
@@ -76,7 +86,7 @@ export function loadConfig(envOverrides?: Record<string, string | undefined>): A
     port: env.PORT,
     host: env.HOST,
     publicBaseUrl: env.PUBLIC_BASE_URL,
-    databaseFile: resolveDatabaseTarget(env) || defaultDb,
+    databaseFile: databaseTarget,
     databaseAuthToken: env.DATABASE_AUTH_TOKEN || env.TURSO_AUTH_TOKEN,
     sessionSecret: env.SESSION_SECRET,
     org: {
