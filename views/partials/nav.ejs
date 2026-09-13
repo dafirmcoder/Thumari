@@ -1,6 +1,6 @@
 <nav class="navbar">
   <a href="/dashboard" class="nav-brand">
-    <img src="/static/icons/icon-192.png" alt="Logo" width="28" height="28" style="border-radius: 6px;">
+    <img src="/static/images/logo.png" alt="Logo" width="36" height="36" style="border-radius: 50%; object-fit: contain;">
     <span><%= org.name %></span>
   </a>
 
@@ -9,12 +9,13 @@
       <a href="/dashboard" class="nav-link <%= currentPath === '/dashboard' ? 'active' : '' %>">Dashboard</a>
       <a href="/members" class="nav-link <%= currentPath.startsWith('/members') ? 'active' : '' %>">Members</a>
       <a href="/contributions" class="nav-link <%= currentPath.startsWith('/contributions') ? 'active' : '' %>">Contributions</a>
+      <a href="/coffee" class="nav-link <%= currentPath.startsWith('/coffee') ? 'active' : '' %>">☕ Coffee</a>
+      <a href="/projects" class="nav-link <%= currentPath.startsWith('/projects') ? 'active' : '' %>">🏗️ Projects</a>
+      <a href="/expenses" class="nav-link <%= currentPath.startsWith('/expenses') ? 'active' : '' %>">💸 Expenses</a>
+      <a href="/dividends" class="nav-link <%= currentPath.startsWith('/dividends') ? 'active' : '' %>">🧮 Dividends</a>
       <a href="/loans" class="nav-link <%= currentPath.startsWith('/loans') ? 'active' : '' %>">Loans</a>
       <a href="/meetings" class="nav-link <%= currentPath.startsWith('/meetings') ? 'active' : '' %>">Meetings</a>
-      
-      <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
-        <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">Reports</a>
-      <% } %>
+      <a href="/reports" class="nav-link <%= currentPath.startsWith('/reports') ? 'active' : '' %>">📊 Reports</a>
 
       <a href="/notifications" class="nav-link <%= currentPath.startsWith('/notifications') ? 'active' : '' %>">
         🔔 Alerts

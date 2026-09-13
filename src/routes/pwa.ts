@@ -5,6 +5,17 @@ import fs from 'node:fs';
 import { PUBLIC_DIR } from '../paths.js';
 
 export function registerPwaRoutes(app: FastifyInstance, config: AppConfig) {
+  // Favicon route
+  app.get('/favicon.ico', async (request, reply) => {
+    const iconPath = path.join(PUBLIC_DIR, 'images', 'logo.png');
+    if (fs.existsSync(iconPath)) {
+      reply.header('Content-Type', 'image/png');
+      reply.header('Cache-Control', 'public, max-age=86400');
+      return reply.send(fs.readFileSync(iconPath));
+    }
+    return reply.status(404).send();
+  });
+
   // Service Worker route with Service-Worker-Allowed root scope header
   app.get('/sw.js', async (request, reply) => {
     const swPath = path.join(PUBLIC_DIR, 'sw.js');
@@ -56,6 +67,11 @@ export function registerPwaRoutes(app: FastifyInstance, config: AppConfig) {
         {
           name: 'Dashboard',
           url: '/dashboard',
+          icons: [{ src: '/static/icons/icon-192.png', sizes: '192x192' }],
+        },
+        {
+          name: 'Coffee Produce',
+          url: '/coffee/scan',
           icons: [{ src: '/static/icons/icon-192.png', sizes: '192x192' }],
         },
         {

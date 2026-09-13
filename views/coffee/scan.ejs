@@ -1,0 +1,339 @@
+<%- include('../partials/head.ejs', { title: 'Scan Coffee Sale Receipt' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="max-width: 960px; margin: 0 auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="margin: 0; font-size: 1.75rem;">?? Scan Coffee Sale Receipt</h1>
+      <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">
+        Take a photo or upload a factory receipt. The farmer's name, KGs, and factory rates are auto-calculated.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="/coffee/rates" class="btn btn-secondary btn-sm">?? Factory Rates</a>
+      <a href="/coffee" class="btn btn-secondary btn-sm">&larr; Deliveries</a>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="align-items: start; gap: 1.5rem;">
+    <!-- Photo Capture & Preview Column -->
+    <div class="card">
+      <div class="card-title">1. Capture / Upload Receipt Photo</div>
+
+      <div id="drop-zone" style="border: 2px dashed #38bdf8; border-radius: 12px; padding: 2.5rem 1rem; text-align: center; background: rgba(56, 189, 248, 0.04); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('receipt-file-input').click()">
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">??</div>
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; color: #38bdf8;">Take Photo or Choose File</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 1rem 0;">
+          Supports smartphone camera capture & image uploads (JPG, PNG, WebP)
+        </p>
+        <button type="button" class="btn btn-primary btn-sm">Take Photo / Select</button>
+        <input type="file" id="receipt-file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleImageSelected(this.files[0])">
+      </div>
+
+      <!-- Live Scan Status / Progress Indicator -->
+      <div id="ocr-status" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div class="spinner" style="width: 20px; height: 20px; border: 3px solid rgba(56, 189, 248, 0.3); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <div>
+            <strong id="ocr-status-title" style="color: #38bdf8;">Reading Receipt Photo...</strong>
+            <div id="ocr-status-desc" style="font-size: 0.8rem; color: var(--text-muted);">Extracting farmer name, kilograms, and receipt details via OCR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Preview -->
+      <div id="image-preview-container" style="display: none; margin-top: 1.25rem;">
+        <label class="form-label" style="display: flex; justify-content: space-between;">
+          <span>Scanned Receipt Photo:</span>
+          <a href="javascript:void(0)" onclick="resetUpload()" style="font-size: 0.8rem; color: #f87171;">Change Photo</a>
+        </label>
+        <div style="max-height: 380px; overflow: hidden; border-radius: 8px; border: 1px solid var(--border-color); background: #000; text-align: center;">
+          <img id="receipt-preview-img" src="" alt="Receipt Preview" style="max-width: 100%; max-height: 380px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Extracted Data & Save Form Column -->
+    <div class="card">
+      <div class="card-title">
+        <span>2. Review Extracted Details</span>
+        <span id="match-badge" class="badge" style="display: none; background: #10b981;">Auto-Matched</span>
+      </div>
+
+      <div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; font-size: 0.8rem; color: #fbbf24; margin-bottom: 1rem;">
+        ?? <strong>Note:</strong> We auto-match the SACCO member by the <strong>Farmer's Name</strong> printed on the receipt. Calculated coffee payout earnings are tracked independently for farmer delivery records (separate from monthly contributions).
+      </div>
+
+      <form id="produce-form" action="/coffee/save" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" id="form-receipt-image-path" name="receiptImagePath" value="">
+        <input type="hidden" id="form-ocr-raw-text" name="ocrRawText" value="">
+        <input type="hidden" id="form-extracted-name" name="extractedMemberName" value="">
+
+        <!-- Member Selector -->
+        <div class="form-group">
+          <label class="form-label" for="memberId">
+            SACCO Member (Farmer) <span style="color: #f87171;">*</span>
+          </label>
+          <select id="memberId" name="memberId" class="form-control" required>
+            <option value="">-- Select SACCO Member --</option>
+            <% for (const m of membersList) { %>
+              <option value="<%= m.id %>" data-name="<%= m.firstName %> <%= m.lastName %>" <%= (currentUserRole === 'member' && currentUserMemberId === m.id) ? 'selected' : '' %>>
+                <%= m.memberNo %> - <%= m.firstName %> <%= m.lastName %> (<%= m.phone || 'No phone' %>)
+              </option>
+            <% } %>
+          </select>
+          <div id="detected-name-hint" style="font-size: 0.8rem; color: #38bdf8; margin-top: 0.25rem; display: none;"></div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Net Weight KGs -->
+          <div class="form-group">
+            <label class="form-label" for="netKg">
+              Net Produce (KGs) <span style="color: #f87171;">*</span>
+            </label>
+            <input type="number" step="0.1" id="netKg" name="netKg" class="form-control" placeholder="e.g. 145.5" required oninput="recalcGrossPayout()" style="font-size: 1.25rem; font-weight: 700; color: #38bdf8;">
+          </div>
+
+          <!-- Factory Grower No -->
+          <div class="form-group">
+            <label class="form-label" for="factoryGrowerNo">Factory Grower No</label>
+            <input type="text" id="factoryGrowerNo" name="factoryGrowerNo" class="form-control" placeholder="e.g. 1402 or K-24">
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Gross Weight -->
+          <div class="form-group">
+            <label class="form-label" for="grossKg">Gross Weight (KGs)</label>
+            <input type="number" step="0.1" id="grossKg" name="grossKg" class="form-control" placeholder="e.g. 150.0">
+          </div>
+
+          <!-- Tare Weight -->
+          <div class="form-group">
+            <label class="form-label" for="tareKg">Tare Weight (KGs)</label>
+            <input type="number" step="0.1" id="tareKg" name="tareKg" class="form-control" placeholder="e.g. 4.5">
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Receipt Number -->
+          <div class="form-group">
+            <label class="form-label" for="receiptNo">Receipt / Ticket No</label>
+            <input type="text" id="receiptNo" name="receiptNo" class="form-control" placeholder="e.g. REC-8921">
+          </div>
+
+          <!-- Receipt Date -->
+          <div class="form-group">
+            <label class="form-label" for="receiptDate">Delivery Date</label>
+            <input type="date" id="receiptDate" name="receiptDate" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Factory Name -->
+          <div class="form-group">
+            <label class="form-label" for="factoryName">Coffee Factory</label>
+            <input type="text" id="factoryName" name="factoryName" class="form-control" placeholder="e.g. Kii Factory" onchange="lookupFactoryRate()" list="factorySuggestions">
+            <datalist id="factorySuggestions">
+              <option value="Kii Factory">
+              <option value="Karimikui Factory">
+              <option value="Kiangoi Factory">
+              <option value="Thunguri Factory">
+              <option value="Mutira Factory">
+              <option value="Kibugu Factory">
+            </datalist>
+          </div>
+
+          <!-- Society Name -->
+          <div class="form-group">
+            <label class="form-label" for="societyName">Cooperative Society</label>
+            <input type="text" id="societyName" name="societyName" class="form-control" placeholder="e.g. Rung'eto FCS" value="Rung'eto Farmers Co-op Society">
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <!-- Coffee Grade -->
+          <div class="form-group">
+            <label class="form-label" for="coffeeGrade">Coffee Grade / Type</label>
+            <select id="coffeeGrade" name="grade" class="form-control" onchange="lookupFactoryRate()">
+              <option value="Cherry" selected>Main Cherry (Grade 1)</option>
+              <option value="Mbuni">Mbuni (Dry Cherry)</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Rate per KG -->
+          <div class="form-group">
+            <label class="form-label" for="ratePerKg">
+              Factory Rate / KG (KES)
+              <a href="/coffee/rates" target="_blank" style="font-size: 0.75rem; color: #38bdf8; font-weight: normal; margin-left: 0.5rem;">?? Rates</a>
+            </label>
+            <input type="text" id="ratePerKg" name="ratePerKg" class="form-control" placeholder="e.g. 115.00" oninput="recalcGrossPayout()">
+          </div>
+        </div>
+
+        <!-- Gross Amount -->
+        <div class="form-group">
+          <label class="form-label" for="grossAmount">
+            Estimated Produce Payout Value (KES)
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Calculated from KGs × Factory Rate)</span>
+          </label>
+          <input type="text" id="grossAmount" name="grossAmount" class="form-control" placeholder="e.g. 16,732.50" style="font-weight: 700; color: #34d399; font-size: 1.15rem;">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label" for="notes">Produce Notes / Delivery Remarks</label>
+          <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. Quality verified from receipt slip">
+        </div>
+
+        <button type="submit" id="save-produce-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; padding: 0.75rem; font-size: 1.05rem;">
+          ?? Save Coffee Produce Record
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+async function handleImageSelected(file) {
+  if (!file) return;
+
+  const previewImg = document.getElementById('receipt-preview-img');
+  const previewContainer = document.getElementById('image-preview-container');
+  const dropZone = document.getElementById('drop-zone');
+  const ocrStatus = document.getElementById('ocr-status');
+  const statusTitle = document.getElementById('ocr-status-title');
+  const statusDesc = document.getElementById('ocr-status-desc');
+
+  previewImg.src = URL.createObjectURL(file);
+  previewContainer.style.display = 'block';
+  dropZone.style.display = 'none';
+  ocrStatus.style.display = 'block';
+  statusTitle.textContent = 'Uploading & Scanning Receipt...';
+  statusDesc.textContent = 'Running optical character recognition on coffee slip';
+
+  try {
+    const formData = new FormData();
+    formData.append('receipt_image', file);
+
+    const csrfToken = '<%= csrfToken %>';
+    const response = await fetch('/coffee/ocr', {
+      method: 'POST',
+      headers: {
+        'x-csrf-token': csrfToken
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      const d = result.data;
+      ocrStatus.style.background = 'rgba(16, 185, 129, 0.1)';
+      ocrStatus.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      statusTitle.style.color = '#34d399';
+      statusTitle.textContent = 'Receipt Extracted Successfully!';
+      statusDesc.textContent = 'Extracted Net: ' + (d.netKg || 0) + ' KGs | Farmer: ' + (d.extractedMemberName || 'Detected');
+
+      document.getElementById('form-receipt-image-path').value = result.imagePath;
+      document.getElementById('form-ocr-raw-text').value = d.rawText || '';
+      document.getElementById('form-extracted-name').value = d.extractedMemberName || '';
+
+      if (d.netKg !== null && d.netKg !== undefined) {
+        document.getElementById('netKg').value = d.netKg;
+      }
+      if (d.grossKg !== null && d.grossKg !== undefined) {
+        document.getElementById('grossKg').value = d.grossKg;
+      }
+      if (d.tareKg !== null && d.tareKg !== undefined) {
+        document.getElementById('tareKg').value = d.tareKg;
+      }
+      if (d.factoryGrowerNo) {
+        document.getElementById('factoryGrowerNo').value = d.factoryGrowerNo;
+      }
+      if (d.receiptNo) {
+        document.getElementById('receiptNo').value = d.receiptNo;
+      }
+      if (d.receiptDate) {
+        document.getElementById('receiptDate').value = d.receiptDate;
+      }
+      if (d.factoryName) {
+        document.getElementById('factoryName').value = d.factoryName;
+      }
+      if (d.societyName) {
+        document.getElementById('societyName').value = d.societyName;
+      }
+
+      // Match Member Dropdown by Name
+      const memberSelect = document.getElementById('memberId');
+      const detectedHint = document.getElementById('detected-name-hint');
+      const matchBadge = document.getElementById('match-badge');
+
+      if (d.matchedMemberId) {
+        memberSelect.value = d.matchedMemberId;
+        matchBadge.style.display = 'inline-block';
+        detectedHint.style.display = 'block';
+        detectedHint.textContent = '? Matched to "' + d.matchedMemberName + '" (from name on slip: "' + d.extractedMemberName + '")';
+      } else if (d.extractedMemberName) {
+        detectedHint.style.display = 'block';
+        detectedHint.textContent = '? Name on slip: "' + d.extractedMemberName + '" (Please confirm member selection)';
+      }
+
+      // Lookup applicable rate
+      lookupFactoryRate();
+    } else {
+      throw new Error(result.error || 'Failed to extract text from receipt.');
+    }
+  } catch (err) {
+    ocrStatus.style.background = 'rgba(239, 68, 68, 0.1)';
+    ocrStatus.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    statusTitle.style.color = '#f87171';
+    statusTitle.textContent = 'OCR Notice';
+    statusDesc.textContent = (err.message || 'Could not auto-read some fields') + '. You can enter details manually.';
+  }
+}
+
+async function lookupFactoryRate() {
+  const factory = document.getElementById('factoryName').value;
+  const grade = document.getElementById('coffeeGrade').value;
+  if (!factory) return;
+
+  try {
+    const res = await fetch('/api/coffee/rate-lookup?factory=' + encodeURIComponent(factory) + '&grade=' + encodeURIComponent(grade));
+    const data = await res.json();
+    if (data.found && data.rateFormatted) {
+      document.getElementById('ratePerKg').value = data.rateFormatted;
+      recalcGrossPayout();
+    }
+  } catch (e) {}
+}
+
+function recalcGrossPayout() {
+  const netKg = parseFloat(document.getElementById('netKg').value) || 0;
+  const ratePerKg = parseFloat(document.getElementById('ratePerKg').value) || 0;
+  if (netKg > 0 && ratePerKg > 0) {
+    const gross = (netKg * ratePerKg).toFixed(2);
+    document.getElementById('grossAmount').value = gross;
+  }
+}
+
+function resetUpload() {
+  document.getElementById('receipt-preview-img').src = '';
+  document.getElementById('image-preview-container').style.display = 'none';
+  document.getElementById('drop-zone').style.display = 'block';
+  document.getElementById('ocr-status').style.display = 'none';
+  document.getElementById('receipt-file-input').value = '';
+}
+</script>
+
+<%- include('../partials/foot.ejs') %>

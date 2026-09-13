@@ -9,6 +9,7 @@ export const memberInputSchema = z.object({
   phone: z.string().trim().optional(),
   email: z.string().trim().email().optional().or(z.literal('')),
   nationalId: z.string().trim().optional(),
+  photoUrl: z.string().trim().optional(),
   joinDate: z.date().optional(),
   status: z.enum(MEMBER_STATUSES).optional(),
   notes: z.string().trim().optional(),
@@ -44,6 +45,7 @@ export async function createMember(db: Db, input: MemberInput): Promise<Member> 
     phone: input.phone || null,
     email: input.email || null,
     nationalId: input.nationalId || null,
+    photoUrl: input.photoUrl || null,
     joinDate: input.joinDate ?? now,
     status: input.status ?? 'active',
     notes: input.notes || null,
@@ -66,6 +68,7 @@ export async function updateMember(db: Db, id: number, input: Partial<MemberInpu
       phone: input.phone !== undefined ? (input.phone || null) : existing.phone,
       email: input.email !== undefined ? (input.email || null) : existing.email,
       nationalId: input.nationalId !== undefined ? (input.nationalId || null) : existing.nationalId,
+      photoUrl: input.photoUrl !== undefined ? (input.photoUrl || null) : existing.photoUrl,
       joinDate: input.joinDate ?? existing.joinDate,
       status: input.status ?? existing.status,
       notes: input.notes !== undefined ? (input.notes || null) : existing.notes,
@@ -96,6 +99,7 @@ export async function listMembers(
         like(members.lastName, pattern),
         like(members.memberNo, pattern),
         like(members.phone, pattern),
+        like(members.nationalId, pattern),
       ),
     );
   }

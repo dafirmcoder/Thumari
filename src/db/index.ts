@@ -270,5 +270,113 @@ export async function applyMigrations(db: Db): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS audit_log_entity_idx ON audit_log(entity, entity_id);
     CREATE INDEX IF NOT EXISTS audit_log_created_idx ON audit_log(created_at);
+
+    CREATE TABLE IF NOT EXISTS coffee_produce (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL REFERENCES members(id),
+      factory_grower_no TEXT,
+      extracted_member_name TEXT,
+      receipt_no TEXT,
+      receipt_date INTEGER NOT NULL,
+      factory_name TEXT,
+      society_name TEXT,
+      gross_kg REAL NOT NULL,
+      tare_kg REAL DEFAULT 0,
+      net_kg REAL NOT NULL,
+      rate_per_kg_cents INTEGER DEFAULT 0,
+      gross_amount_cents INTEGER DEFAULT 0,
+      deductions_cents INTEGER DEFAULT 0,
+      net_payout_cents INTEGER DEFAULT 0,
+      receipt_image_path TEXT NOT NULL,
+      ocr_raw_text TEXT,
+      status TEXT NOT NULL DEFAULT 'pending_verification',
+      recorded_by INTEGER REFERENCES users(id),
+      verified_by_user_id INTEGER REFERENCES users(id),
+      verified_at INTEGER,
+      rejection_reason TEXT,
+      notes TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS coffee_produce_member_idx ON coffee_produce(member_id);
+    CREATE INDEX IF NOT EXISTS coffee_produce_date_idx ON coffee_produce(receipt_date);
+    CREATE INDEX IF NOT EXISTS coffee_produce_status_idx ON coffee_produce(status);
+
+    CREATE TABLE IF NOT EXISTS group_projects (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      code TEXT NOT NULL UNIQUE,
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      start_date INTEGER,
+      target_budget_cents INTEGER DEFAULT 0,
+      created_by INTEGER REFERENCES users(id),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS group_projects_status_idx ON group_projects(status);
+
+    CREATE TABLE IF NOT EXISTS project_incomes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_id INTEGER NOT NULL REFERENCES group_projects(id) ON DELETE CASCADE,
+      income_date INTEGER NOT NULL,
+      source TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      payment_method TEXT NOT NULL DEFAULT 'mpesa',
+      receipt_no TEXT,
+      recorded_by INTEGER REFERENCES users(id),
+      notes TEXT,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS project_incomes_project_idx ON project_incomes(project_id);
+    CREATE INDEX IF NOT EXISTS project_incomes_date_idx ON project_incomes(income_date);
+
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      expense_date INTEGER NOT NULL,
+      category TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      payee TEXT NOT NULL,
+      purpose TEXT NOT NULL,
+      payment_method TEXT NOT NULL DEFAULT 'mpesa',
+      receipt_number TEXT,
+      receipt_photo_url TEXT,
+      project_id INTEGER REFERENCES group_projects(id),
+      approved_by INTEGER REFERENCES users(id),
+      recorded_by INTEGER REFERENCES users(id),
+      notes TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS expenses_category_idx ON expenses(category);
+    CREATE INDEX IF NOT EXISTS expenses_date_idx ON expenses(expense_date);
+    CREATE INDEX IF NOT EXISTS expenses_project_idx ON expenses(project_id);
+
+    CREATE TABLE IF NOT EXISTS factory_rates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      factory_name TEXT NOT NULL,
+      society_name TEXT,
+      season_year INTEGER NOT NULL,
+      grade TEXT NOT NULL DEFAULT 'Cherry',
+      rate_per_kg_cents INTEGER NOT NULL,
+      notes TEXT,
+      updated_by INTEGER REFERENCES users(id),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      UNIQUE(factory_name, season_year, grade)
+    );
+    CREATE INDEX IF NOT EXISTS factory_rates_factory_idx ON factory_rates(factory_name);
+    CREATE INDEX IF NOT EXISTS factory_rates_year_idx ON factory_rates(season_year);
   `);
+
+  // Column additions for existing databases (idempotent)
+  try {
+    await client.execute('ALTER TABLE members ADD COLUMN photo_url TEXT;');
+  } catch {}
+  try {
+    await client.execute('ALTER TABLE members ADD COLUMN national_id TEXT;');
+  } catch {}
+  try {
+    await client.execute('CREATE INDEX IF NOT EXISTS members_national_id_idx ON members(national_id);');
+  } catch {}
 }

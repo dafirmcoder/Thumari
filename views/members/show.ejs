@@ -1,32 +1,105 @@
 <%- include('../partials/head.ejs', { title: member.firstName + ' ' + member.lastName }) %>
 <%- include('../partials/nav.ejs') %>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-  <div>
-    <div style="font-size: 0.85rem; color: var(--text-muted);"><%= member.memberNo %> &bull; Joined <%= formatDate(member.joinDate) %></div>
-    <h1 style="margin: 0; font-size: 1.75rem;"><%= member.firstName %> <%= member.lastName %></h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div style="display: flex; align-items: center; gap: 1.25rem;">
+    <!-- Member Avatar / Photo -->
+    <div style="width: 72px; height: 72px; border-radius: 50%; overflow: hidden; background: #0284c7; display: flex; align-items: center; justify-content: center; border: 3px solid var(--border-color); flex-shrink: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);">
+      <% if (member.photoUrl) { %>
+        <img src="<%= member.photoUrl %>" alt="<%= member.firstName %>" style="width: 100%; height: 100%; object-fit: cover;">
+      <% } else { %>
+        <span style="font-size: 2rem; color: #fff; font-weight: 700;">
+          <%= member.firstName[0] %><%= member.lastName[0] %>
+        </span>
+      <% } %>
+    </div>
+
+    <div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);"><%= member.memberNo %> &bull; Joined <%= formatDate(member.joinDate) %></div>
+      <h1 style="margin: 0; font-size: 1.75rem;"><%= member.firstName %> <%= member.lastName %></h1>
+      <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem;">
+        <span class="badge" style="font-size: 0.8rem; background: <%= member.status === 'active' ? '#10b981' : '#f59e0b' %>;">
+          <%= member.status.toUpperCase() %>
+        </span>
+        <% if (member.nationalId) { %>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">?? ID: <strong><%= member.nationalId %></strong></span>
+        <% } %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <span class="badge" style="font-size: 1rem; padding: 0.35rem 0.75rem; background: <%= member.status === 'active' ? '#10b981' : '#f59e0b' %>;">
-      <%= member.status.toUpperCase() %>
-    </span>
+  <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+    <a href="/members/<%= member.id %>/edit" class="btn btn-secondary btn-sm">?? Edit Profile</a>
+    <a href="/coffee/scan" class="btn btn-primary btn-sm">?? Add Coffee Produce</a>
+    <a href="/contributions/new" class="btn btn-secondary btn-sm">+ Contribution</a>
+    <a href="/members" class="btn btn-secondary btn-sm">&larr; Members</a>
   </div>
 </div>
 
 <div class="grid grid-3" style="margin-bottom: 1.5rem;">
   <div class="stat-box">
-    <div class="stat-label">Phone</div>
-    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);"><%= member.phone || 'â€”' %></div>
+    <div class="stat-label">Phone Number</div>
+    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);"><%= member.phone || '—' %></div>
   </div>
   <div class="stat-box">
-    <div class="stat-label">Email</div>
-    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);"><%= member.email || 'â€”' %></div>
+    <div class="stat-label">National ID Number</div>
+    <div class="stat-value" style="font-size: 1.1rem; color: #38bdf8; font-weight: 700;"><%= member.nationalId || '—' %></div>
   </div>
   <div class="stat-box">
-    <div class="stat-label">National ID</div>
-    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);"><%= member.nationalId || 'â€”' %></div>
+    <div class="stat-label">Email Address</div>
+    <div class="stat-value" style="font-size: 1.1rem; color: var(--text-main);"><%= member.email || '—' %></div>
   </div>
+</div>
+
+<!-- Coffee Produce Deliveries Section -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-title">
+    <span>? Coffee Produce Deliveries (<%= typeof coffeeProduce !== 'undefined' ? coffeeProduce.length : 0 %>)</span>
+    <a href="/coffee/scan" style="font-size: 0.85rem;">+ Record Delivery</a>
+  </div>
+
+  <% if (typeof coffeeProduce === 'undefined' || coffeeProduce.length === 0) { %>
+    <p style="color: var(--text-muted); font-size: 0.9rem; padding: 1rem 0;">No coffee delivery receipts recorded for this member yet.</p>
+  <% } else { %>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Receipt No</th>
+            <th>Factory / Society</th>
+            <th>Delivery Date</th>
+            <th style="text-align: right;">Net (KGs)</th>
+            <th style="text-align: right;">Gross (KES)</th>
+            <th>Status</th>
+            <th style="text-align: center;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const r of coffeeProduce) { %>
+            <tr>
+              <td>
+                <a href="/coffee/<%= r.produce.id %>">
+                  <strong><%= r.produce.receiptNo || ('REC-' + r.produce.id) %></strong>
+                </a>
+              </td>
+              <td><%= r.produce.factoryName || 'Factory' %></td>
+              <td><%= formatDate(r.produce.receiptDate) %></td>
+              <td style="text-align: right; font-weight: 700; color: #38bdf8;"><%= r.produce.netKg.toFixed(1) %> KG</td>
+              <td style="text-align: right; color: #34d399;"><%= r.produce.grossAmountCents ? formatMoney(r.produce.grossAmountCents) : '-' %></td>
+              <td>
+                <span class="badge" style="background: <%= r.produce.status === 'verified' ? '#10b981' : '#f59e0b' %>;">
+                  <%= r.produce.status %>
+                </span>
+              </td>
+              <td style="text-align: center;">
+                <a href="/coffee/<%= r.produce.id %>" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">View &rarr;</a>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
 </div>
 
 <div class="grid grid-2">
@@ -34,6 +107,7 @@
   <div class="card">
     <div class="card-title">
       <span>Contributions History</span>
+      <a href="/contributions/new" style="font-size: 0.85rem;">+ Add</a>
     </div>
 
     <% if (contributions.length === 0) { %>
@@ -54,7 +128,7 @@
               <tr>
                 <td><%= c.typeName %></td>
                 <td style="color: #34d399; font-weight: 600;"><%= formatMoney(c.amountCents) %></td>
-                <td><%= c.period || 'â€”' %></td>
+                <td><%= c.period || '—' %></td>
                 <td><%= formatDate(c.paidAt) %></td>
               </tr>
             <% } %>
@@ -67,7 +141,8 @@
   <!-- Member Loans -->
   <div class="card">
     <div class="card-title">
-      <span>Loans</span>
+      <span>Loans & Repayments</span>
+      <a href="/loans/new" style="font-size: 0.85rem;">+ Apply</a>
     </div>
 
     <% if (loans.length === 0) { %>

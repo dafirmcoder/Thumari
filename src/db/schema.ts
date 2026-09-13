@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const USER_ROLES = ['admin', 'treasurer', 'secretary', 'member'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -32,6 +32,9 @@ export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
 export const FINE_STATUSES = ['outstanding', 'paid', 'waived'] as const;
 export type FineStatus = (typeof FINE_STATUSES)[number];
+
+export const PRODUCE_STATUSES = ['pending_verification', 'verified', 'rejected'] as const;
+export type ProduceStatus = (typeof PRODUCE_STATUSES)[number];
 
 // Users
 export const users = sqliteTable('users', {
@@ -69,6 +72,7 @@ export const members = sqliteTable('members', {
   phone: text('phone'),
   email: text('email'),
   nationalId: text('national_id'),
+  photoUrl: text('photo_url'),
   joinDate: integer('join_date', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
   status: text('status', { enum: MEMBER_STATUSES }).notNull().default('active'),
   exitDate: integer('exit_date', { mode: 'timestamp_ms' }),
@@ -77,6 +81,7 @@ export const members = sqliteTable('members', {
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 }, (table) => [
   index('members_status_idx').on(table.status),
+  index('members_national_id_idx').on(table.nationalId),
 ]);
 
 // Contribution Types
@@ -307,11 +312,119 @@ export const auditLog = sqliteTable('audit_log', {
   index('audit_log_created_idx').on(table.createdAt),
 ]);
 
+// Coffee Produce (Receipt scanning & deliveries)
+export const coffeeProduce = sqliteTable('coffee_produce', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  memberId: integer('member_id').notNull().references(() => members.id),
+  factoryGrowerNo: text('factory_grower_no'),
+  extractedMemberName: text('extracted_member_name'),
+  receiptNo: text('receipt_no'),
+  receiptDate: integer('receipt_date', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  factoryName: text('factory_name'),
+  societyName: text('society_name'),
+  grossKg: real('gross_kg').notNull(),
+  tareKg: real('tare_kg').default(0),
+  netKg: real('net_kg').notNull(),
+  ratePerKgCents: integer('rate_per_kg_cents').default(0),
+  grossAmountCents: integer('gross_amount_cents').default(0),
+  deductionsCents: integer('deductions_cents').default(0),
+  netPayoutCents: integer('net_payout_cents').default(0),
+  receiptImagePath: text('receipt_image_path').notNull(),
+  ocrRawText: text('ocr_raw_text'),
+  status: text('status', { enum: PRODUCE_STATUSES }).notNull().default('pending_verification'),
+  recordedBy: integer('recorded_by').references(() => users.id),
+  verifiedByUserId: integer('verified_by_user_id').references(() => users.id),
+  verifiedAt: integer('verified_at', { mode: 'timestamp_ms' }),
+  rejectionReason: text('rejection_reason'),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('coffee_produce_member_idx').on(table.memberId),
+  index('coffee_produce_date_idx').on(table.receiptDate),
+  index('coffee_produce_status_idx').on(table.status),
+]);
+
+// Group Projects
+export const groupProjects = sqliteTable('group_projects', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  code: text('code').notNull().unique(),
+  description: text('description'),
+  status: text('status', { enum: ['planning', 'active', 'completed', 'suspended'] }).notNull().default('active'),
+  startDate: integer('start_date', { mode: 'timestamp_ms' }),
+  targetBudgetCents: integer('target_budget_cents').default(0),
+  createdBy: integer('created_by').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('group_projects_status_idx').on(table.status),
+]);
+
+// Project Incomes / Revenues
+export const projectIncomes = sqliteTable('project_incomes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  projectId: integer('project_id').notNull().references(() => groupProjects.id, { onDelete: 'cascade' }),
+  incomeDate: integer('income_date', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  source: text('source').notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  paymentMethod: text('payment_method', { enum: PAYMENT_METHODS }).notNull().default('mpesa'),
+  receiptNo: text('receipt_no'),
+  recordedBy: integer('recorded_by').references(() => users.id),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('project_incomes_project_idx').on(table.projectId),
+  index('project_incomes_date_idx').on(table.incomeDate),
+]);
+
+// Expenses
+export const expenses = sqliteTable('expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  expenseDate: integer('expense_date', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  category: text('category').notNull(), // 'meeting', 'admin', 'bank_charges', 'farm_inputs', 'project', 'welfare', 'other'
+  amountCents: integer('amount_cents').notNull(),
+  payee: text('payee').notNull(),
+  purpose: text('purpose').notNull(),
+  paymentMethod: text('payment_method', { enum: PAYMENT_METHODS }).notNull().default('mpesa'),
+  receiptNumber: text('receipt_number'),
+  receiptPhotoUrl: text('receipt_photo_url'),
+  projectId: integer('project_id').references(() => groupProjects.id),
+  approvedBy: integer('approved_by').references(() => users.id),
+  recordedBy: integer('recorded_by').references(() => users.id),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index('expenses_category_idx').on(table.category),
+  index('expenses_date_idx').on(table.expenseDate),
+  index('expenses_project_idx').on(table.projectId),
+]);
+
+// Factory Rates (Admin seasonal rates per factory & grade)
+export const factoryRates = sqliteTable('factory_rates', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  factoryName: text('factory_name').notNull(),
+  societyName: text('society_name'),
+  seasonYear: integer('season_year').notNull(),
+  grade: text('grade').notNull().default('Cherry'), // 'Cherry', 'Mbuni', etc.
+  ratePerKgCents: integer('rate_per_kg_cents').notNull(),
+  notes: text('notes'),
+  updatedBy: integer('updated_by').references(() => users.id),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  uniqueIndex('factory_rates_unique').on(table.factoryName, table.seasonYear, table.grade),
+  index('factory_rates_factory_idx').on(table.factoryName),
+  index('factory_rates_year_idx').on(table.seasonYear),
+]);
+
 // Types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type Member = typeof members.$inferSelect;
+export type NewMember = typeof members.$inferInsert;
 export type ContributionType = typeof contributionTypes.$inferSelect;
 export type Contribution = typeof contributions.$inferSelect;
 export type LoanProduct = typeof loanProducts.$inferSelect;
@@ -323,3 +436,14 @@ export type Fine = typeof fines.$inferSelect;
 export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
 export type NotificationRow = typeof notifications.$inferSelect;
 export type AuditLogRow = typeof auditLog.$inferSelect;
+export type CoffeeProduce = typeof coffeeProduce.$inferSelect;
+export type NewCoffeeProduce = typeof coffeeProduce.$inferInsert;
+export type GroupProject = typeof groupProjects.$inferSelect;
+export type NewGroupProject = typeof groupProjects.$inferInsert;
+export type ProjectIncome = typeof projectIncomes.$inferSelect;
+export type NewProjectIncome = typeof projectIncomes.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;
+export type FactoryRate = typeof factoryRates.$inferSelect;
+export type NewFactoryRate = typeof factoryRates.$inferInsert;
+

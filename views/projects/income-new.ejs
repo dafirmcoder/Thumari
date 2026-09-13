@@ -1,0 +1,61 @@
+<%- include('../partials/head.ejs', { title: 'Record Income - ' + project.name }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="max-width: 600px; margin: 1.5rem auto;">
+  <div class="card">
+    <div class="card-title">
+      <span>?? Record Project Income: <%= project.name %></span>
+      <a href="/projects/<%= project.id %>" style="font-size: 0.85rem;">&larr; Back</a>
+    </div>
+
+    <form action="/projects/<%= project.id %>/income" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="form-group">
+        <label class="form-label" for="source">Revenue Source / Customer / Sale Particulars *</label>
+        <input type="text" id="source" name="source" class="form-control" placeholder="e.g. Sale of 40 Bags of Planting Fertilizer to Member John Maina" required>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="amount">Income Amount (KES) *</label>
+          <input type="number" id="amount" name="amount" class="form-control" placeholder="e.g. 35000" step="0.01" min="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="incomeDate">Date Received</label>
+          <input type="date" id="incomeDate" name="incomeDate" class="form-control" value="<%= toDateInput(new Date()) %>">
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="paymentMethod">Payment Method</label>
+          <select id="paymentMethod" name="paymentMethod" class="form-control">
+            <option value="mpesa" selected>M-Pesa</option>
+            <option value="bank">Bank Deposit / Transfer</option>
+            <option value="cash">Cash</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="receiptNo">Receipt / M-Pesa Transaction Ref</label>
+          <input type="text" id="receiptNo" name="receiptNo" class="form-control" placeholder="e.g. QX8920194">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Notes / Remarks</label>
+        <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <a href="/projects/<%= project.id %>" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Income Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

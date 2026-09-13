@@ -21,18 +21,17 @@ export function registerAuth(app: FastifyInstance, db: Db): void {
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   if (!request.currentUser) {
     const nextUrl = encodeURIComponent(request.url);
-    reply.redirect(`/login?next=${nextUrl}`);
+    return reply.redirect(`/login?next=${nextUrl}`);
   }
 }
 
 export function requireRole(roles: UserRole[]) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (!request.currentUser) {
-      reply.redirect('/login');
-      return;
+      return reply.redirect('/login');
     }
     if (!roles.includes(request.currentUser.role)) {
-      reply.status(403).send('Forbidden: Insufficient privileges for this action');
+      return reply.status(403).send('Forbidden: Insufficient privileges for this action');
     }
   };
 }

@@ -1,0 +1,102 @@
+<%- include('../partials/head.ejs', { title: 'Group Projects' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">??? Group Projects & Enterprise Earnings</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Commercial group investments, project revenues, and profitability</p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <% if (['admin', 'treasurer', 'secretary'].includes(currentUser.role)) { %>
+      <a href="/projects/new" class="btn btn-primary btn-sm">+ Register Project</a>
+    <% } %>
+    <a href="/reports/accounts" class="btn btn-secondary btn-sm">?? Accounts Statement</a>
+  </div>
+</div>
+
+<!-- Project Summary Stat Cards -->
+<div class="grid grid-3" style="margin-bottom: 1.5rem;">
+  <div class="stat-box">
+    <div class="stat-label">Total Project Revenues</div>
+    <div class="stat-value" style="color: #34d399;"><%= formatMoney(totalIncome) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Project Expenses</div>
+    <div class="stat-value" style="color: #ef4444;"><%= formatMoney(totalExpense) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Net Project Earnings / Surplus</div>
+    <div class="stat-value" style="color: <%= totalNetProfit >= 0 ? '#38bdf8' : '#ef4444' %>;">
+      <%= formatMoney(totalNetProfit) %>
+    </div>
+  </div>
+</div>
+
+<!-- Projects Grid -->
+<div class="grid grid-2" style="gap: 1.5rem;">
+  <% if (projects.length === 0) { %>
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">No group commercial projects registered yet.</p>
+      <% if (['admin', 'treasurer', 'secretary'].includes(currentUser.role)) { %>
+        <a href="/projects/new" class="btn btn-primary btn-sm">+ Register First Project</a>
+      <% } %>
+    </div>
+  <% } %>
+
+  <% for (const p of projects) { %>
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <div>
+            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;"><%= p.project.code %></span>
+            <h3 style="margin: 0.2rem 0; font-size: 1.3rem;">
+              <a href="/projects/<%= p.project.id %>"><%= p.project.name %></a>
+            </h3>
+          </div>
+          <span class="badge" style="background: <%= p.project.status === 'active' ? '#10b981' : p.project.status === 'planning' ? '#0284c7' : '#64748b' %>;">
+            <%= p.project.status.toUpperCase() %>
+          </span>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+          <%= p.project.description || 'No description provided.' %>
+        </p>
+
+        <!-- Financial Overview Bar -->
+        <div style="background: rgba(15,23,42,0.5); padding: 0.85rem; border-radius: 0.5rem; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; text-align: center;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Incomes (<%= p.incomeCount %>)</div>
+              <div style="font-weight: 700; color: #34d399; font-size: 0.95rem;"><%= formatMoney(p.totalIncomeCents) %></div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Expenses (<%= p.expenseCount %>)</div>
+              <div style="font-weight: 700; color: #ef4444; font-size: 0.95rem;"><%= formatMoney(p.totalExpenseCents) %></div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Net Profit</div>
+              <div style="font-weight: 700; color: <%= p.netProfitCents >= 0 ? '#38bdf8' : '#ef4444' %>; font-size: 0.95rem;">
+                <%= formatMoney(p.netProfitCents) %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.5rem;">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          Budget: <%= formatMoney(p.project.targetBudgetCents || 0) %>
+        </span>
+        <div style="display: flex; gap: 0.5rem;">
+          <% if (['admin', 'treasurer', 'secretary'].includes(currentUser.role)) { %>
+            <a href="/projects/<%= p.project.id %>/income/new" class="btn btn-primary btn-sm" style="font-size: 0.8rem; padding: 0.2rem 0.6rem;">+ Record Income</a>
+          <% } %>
+          <a href="/projects/<%= p.project.id %>" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 0.2rem 0.6rem;">View Details &rarr;</a>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/foot.ejs') %>

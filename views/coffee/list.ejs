@@ -1,0 +1,226 @@
+<%- include('../partials/head.ejs', { title: 'Coffee Produce Deliveries' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style=display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;>
+  <div>
+    <h1 style=margin: 0; font-size: 1.75rem;>☕ Coffee Produce Deliveries</h1>
+    <p style=color: var(--text-muted); margin: 0.25rem 0 0 0;>
+      Member Coffee Cherry Deliveries & Factory Receipts (Kirinyaga County)
+    </p>
+  </div>
+
+  <div style=display: flex; gap: 0.5rem; flex-wrap: wrap;>
+    <a href=/coffee/scan class=btn btn-primary btn-sm>📷 Scan / Take Receipt Photo</a>
+    <a href=/reports/coffee-produce class=btn btn-secondary btn-sm>📊 Produce Reports</a>
+  </div>
+</div>
+
+<!-- Produce Stats Cards -->
+<div class=grid grid-4 style=margin-bottom: 1.5rem;>
+  <div class=stat-box>
+    <div class=stat-label>Total Net Produce</div>
+    <div class=stat-value style=color: #38bdf8;><%= summary.totalNetKg.toFixed(1) %> KG</div>
+  </div>
+  <div class=stat-box>
+    <div class=stat-label>Total Receipts</div>
+    <div class=stat-value><%= summary.totalDeliveries %></div>
+  </div>
+  <div class=stat-box>
+    <div class=stat-label>Verified Deliveries</div>
+    <div class=stat-value style=color: #34d399;><%= summary.verifiedDeliveries %></div>
+  </div>
+  <div class=stat-box>
+    <div class=stat-label>Pending Verification</div>
+    <div class=stat-value style=color: <%= summary.pendingDeliveries > 0 ? '#f59e0b' : 'var(--text-muted)' %>;>
+      <%= summary.pendingDeliveries %>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class=card style=margin-bottom: 1.5rem; padding: 1rem;>
+  <form method=GET action=/coffee style=margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;>
+    <div style=flex: 1; min-width: 180px;>
+      <label class=form-label style=margin-bottom: 0.25rem;>Filter by Member</label>
+      <select name=memberId class=form-control onchange=this.form.submit()>
+        <option value=">-- All Members --</option>
+ <% for (const m of membersList) { %>
+ <option value=<%= m.id %> <%= selectedMemberId == m.id ? 'selected' : '' %>>
+ <%= m.memberNo %> - <%= m.firstName %> <%= m.lastName %>
+ </option>
+ <% } %>
+ </select>
+ </div>
+
+ <div style=width: 160px;>
+ <label class=form-label style=margin-bottom: 0.25rem;>Verification Status</label>
+ <select name=status class=form-control onchange=this.form.submit()>
+ <option value=>-- All Statuses --</option>
+ <option value=pending_verification <%= selectedStatus === 'pending_verification' ? 'selected' : '' %>>Pending</option>
+ <option value=verified <%= selectedStatus === 'verified' ? 'selected' : '' %>>Verified</option>
+ <option value=rejected <%= selectedStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+ </select>
+ </div>
+
+ <div>
+ <a href=/coffee class=btn btn-secondary btn-sm style=height: 38px; display: inline-flex; align-items: center;>Reset</a>
+ </div>
+ </form>
+</div>
+
+<!-- Produce Records Table -->
+<div class=card>
+ <div class=card-title>
+ <span>Coffee Delivery Records (<%= records.length %>)</span>
+ <a href=/coffee/scan style=font-size: 0.85rem;>+ Upload New Receipt</a>
+ </div>
+
+ <div class=table-responsive>
+ <table>
+ <thead>
+    <thead>
+      <tr>
+        <th>Receipt No</th>
+        <th>Farmer / Member</th>
+        <th>Factory / Society</th>
+        <th style="text-align: right;">Net (KGs)</th>
+        <th style="text-align: right;">Gross (KES)</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th style="text-align: center;">Receipt Image</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (records.length === 0) { %>
+        <tr>
+          <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+            No coffee produce records found matching your filters.
+            <br><br>
+            <a href="/coffee/scan" class="btn btn-primary btn-sm">📷 Scan Receipt Now</a>
+          </td>
+        </tr>
+      <% } %>
+
+      <% for (const r of records) { %>
+        <tr>
+          <td>
+            <a href="/coffee/<%= r.produce.id %>">
+              <strong><%= r.produce.receiptNo || ('REC-' + r.produce.id) %></strong>
+            </a>
+            <% if (r.produce.factoryGrowerNo) { %>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Grower #<%= r.produce.factoryGrowerNo %></div>
+            <% } %>
+          </td>
+          <td>
+            <strong><%= r.member.firstName %> <%= r.member.lastName %></strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);"><%= r.member.memberNo %></div>
+          </td>
+          <td>
+            <%= r.produce.factoryName || 'Factory' %>
+            <div style="font-size: 0.75rem; color: var(--text-muted);"><%= r.produce.societyName || 'FCS' %></div>
+          </td>
+          <td style="text-align: right; font-weight: 700; color: #38bdf8;">
+            <%= r.produce.netKg.toFixed(1) %> KG
+          </td>
+          <td style="text-align: right; color: #34d399; font-weight: 500;">
+            <%= r.produce.grossAmountCents ? formatMoney(r.produce.grossAmountCents) : '-' %>
+          </td>
+          <td><%= formatDate(r.produce.receiptDate) %></td>
+          <td>
+            <% if (r.produce.status === 'verified') { %>
+              <span class="badge" style="background: #10b981;">✅ Verified</span>
+            <% } else if (r.produce.status === 'rejected') { %>
+              <span class="badge" style="background: #ef4444;">❌ Rejected</span>
+            <% } else { %>
+              <span class="badge" style="background: #f59e0b;">⏳ Pending</span>
+            <% } %>
+          </td>
+          <td style="text-align: center;">
+            <% if (r.produce.receiptImagePath) { %>
+              <button type="button" 
+                      onclick="openReceiptImageModal('<%= r.produce.receiptImagePath %>', '<%= r.produce.receiptNo || ('REC-' + r.produce.id) %>', '<%= r.member.firstName %> <%= r.member.lastName %>', '<%= r.produce.netKg.toFixed(1) %> KG', '<%= formatDate(r.produce.receiptDate) %>', '<%= r.produce.factoryName || 'Factory' %>')"
+                      class="btn btn-secondary btn-sm"
+                      style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem;"
+                      title="Click to view scanned receipt image">
+                <span style="font-size: 1rem;">🖼️</span>
+                <span>View Image</span>
+              </button>
+            <% } else { %>
+              <span style="color: var(--text-muted); font-size: 0.8rem;">No photo</span>
+            <% } %>
+          </td>
+          <td>
+            <a href="/coffee/<%= r.produce.id %>" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">View &rarr;</a>
+          </td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- Receipt Image Lightbox Modal -->
+<div id="receiptImageModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(4px);">
+  <div style="background: var(--bg-card, #1e293b); border: 1px solid var(--border-color, #334155); border-radius: 0.75rem; max-width: 800px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color, #334155); background: rgba(15,23,42,0.6);">
+      <div>
+        <h3 id="modalReceiptTitle" style="margin: 0; font-size: 1.15rem; color: #f8fafc;">Receipt Image</h3>
+        <p id="modalReceiptSub" style="margin: 0.2rem 0 0 0; font-size: 0.82rem; color: var(--text-muted, #94a3b8);"></p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <a id="modalOpenTab" href="#" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">↗️ Full Size</a>
+        <button type="button" onclick="closeReceiptImageModal()" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 1.1rem; line-height: 1;" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+
+    <div style="padding: 1rem; overflow-y: auto; text-align: center; flex: 1; display: flex; justify-content: center; align-items: center; background: #0b0f19;">
+      <img id="modalReceiptImg" src="" alt="Scanned Coffee Receipt" style="max-width: 100%; max-height: 65vh; object-fit: contain; border-radius: 0.375rem; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">
+    </div>
+
+    <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--border-color, #334155); display: flex; justify-content: space-between; align-items: center; background: rgba(15,23,42,0.6); font-size: 0.85rem;">
+      <span id="modalReceiptDetails" style="color: var(--text-muted, #94a3b8);"></span>
+      <button type="button" onclick="closeReceiptImageModal()" class="btn btn-secondary btn-sm">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openReceiptImageModal(imgSrc, receiptNo, memberName, netKg, date, factory) {
+    var modal = document.getElementById('receiptImageModal');
+    var img = document.getElementById('modalReceiptImg');
+    var title = document.getElementById('modalReceiptTitle');
+    var sub = document.getElementById('modalReceiptSub');
+    var details = document.getElementById('modalReceiptDetails');
+    var openTab = document.getElementById('modalOpenTab');
+
+    img.src = imgSrc;
+    title.innerText = '🧾 Receipt: ' + receiptNo;
+    sub.innerText = 'Farmer: ' + memberName + ' • Delivered: ' + date;
+    details.innerText = 'Factory: ' + factory + ' • Net Produce: ' + netKg;
+    openTab.href = imgSrc;
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeReceiptImageModal() {
+    var modal = document.getElementById('receiptImageModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeReceiptImageModal();
+    }
+  });
+
+  document.getElementById('receiptImageModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeReceiptImageModal();
+    }
+  });
+</script>
+
+<%- include('../partials/foot.ejs') %>

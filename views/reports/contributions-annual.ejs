@@ -1,0 +1,102 @@
+﻿<%- include('../partials/head.ejs', { title: 'Annual Contributions Matrix - ' + year }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style=display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;>
+  <div>
+    <h1 style=margin: 0; font-size: 1.75rem;>Annual Contributions Summary (<%= year %>)</h1>
+    <p style=color: var(--text-muted); margin: 0.25rem 0 0 0;>
+      12-Month Cross-Tab Matrix for <%= org.name %>
+    </p>
+  </div>
+
+  <div style=display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;>
+    <form method=GET action=/reports/contributions-annual style=margin: 0; display: flex; gap: 0.5rem; align-items: center;>
+      <label for=year style=font-size: 0.85rem; color: var(--text-muted);>Year:</label>
+      <select id=year name=year class=form-control style=width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem; onchange=this.form.submit()>
+        <% for (let y = 2024; y <= 2028; y++) { %>
+          <option value=<%= y %> <%= y === year ? 'selected' : '' %>><%= y %></option>
+        <% } %>
+      </select>
+    </form>
+
+    <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+      <a href=/reports/contributions-annual/export?year=<%= year %> class=btn btn-secondary btn-sm>📥 Export CSV</a>
+    <% } %>
+    <button onclick=window.print() class=btn btn-secondary btn-sm>🖨️ Print Matrix</button>
+  </div>
+</div>
+
+<!-- Annual KPI Totals -->
+<div class=grid grid-4 style=margin-bottom: 1.5rem;>
+  <div class=stat-box>
+    <div class=stat-label>Total <%= year %> Collection</div>
+    <div class=stat-value style=color: #34d399;><%= formatMoney(report.grandTotalCents) %></div>
+  </div>
+  <% for (const tb of report.typeBreakdown) { %>
+    <div class=stat-box>
+      <div class=stat-label><%= tb.typeName %></div>
+      <div class=stat-value><%= formatMoney(tb.totalCents) %></div>
+    </div>
+  <% } %>
+</div>
+
+<!-- 12-Month Member Matrix Table -->
+<div class=card>
+  <div class=card-title>
+    <span>Member Annual 12-Month Matrix (<%= year %>)</span>
+    <span style=font-size: 0.85rem; color: var(--text-muted);><%= report.members.length %> Members</span>
+  </div>
+
+  <div class=table-responsive>
+    <table style=font-size: 0.85rem;>
+      <thead>
+        <tr>
+          <th>Member No</th>
+          <th>Member Name</th>
+          <% const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; %>
+          <% for (let i = 0; i < 12; i++) { %>
+            <th style=text-align: right;><%= monthNames[i] %></th>
+          <% } %>
+          <th style=text-align: right; color: #38bdf8; font-weight: 700;>Annual Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (report.members.length === 0) { %>
+          <tr>
+            <td colspan=15 style=text-align: center; color: var(--text-muted); padding: 2rem;>
+              No member records found.
+            </td>
+          </tr>
+        <% } %>
+
+        <% for (const m of report.members) { %>
+          <tr>
+            <td><strong><%= m.memberNo %></strong></td>
+            <td style=white-space: nowrap;><%= m.fullName %></td>
+            <% for (let mo = 1; mo <= 12; mo++) { %>
+              <td style=text-align: right; <%= (m.months[mo] || 0) > 0 ? 'font-weight: 500;' : 'color: var(--text-muted);' %>>
+                <%= (m.months[mo] || 0) > 0 ? formatMoney(m.months[mo]) : '-' %>
+              </td>
+            <% } %>
+            <td style=text-align: right; font-weight: 700; color: <%= m.totalCents > 0 ? '#34d399' : 'var(--text-muted)' %>;>
+              <%= formatMoney(m.totalCents) %>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+      <% if (report.members.length > 0) { %>
+        <tfoot>
+          <tr style=border-top: 2px solid var(--border-color); font-weight: 700; background: rgba(255,255,255,0.03);>
+            <td colspan=2>TOTALS (ALL)</td>
+            <% for (let mo = 1; mo <= 12; mo++) { %>
+              <td style=text-align: right; color: #38bdf8;><%= formatMoney(report.monthTotals[mo] || 0) %></td>
+            <% } %>
+            <td style=text-align: right; color: #34d399; font-size: 1rem;><%= formatMoney(report.grandTotalCents) %></td>
+          </tr>
+        </tfoot>
+      <% } %>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

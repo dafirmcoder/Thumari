@@ -1,0 +1,172 @@
+﻿<%- include('../partials/head.ejs', { title: 'Coffee Delivery ' + (item.produce.receiptNo || ('#' + item.produce.id)) }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style=max-width: 960px; margin: 0 auto;>
+  <div style=display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;>
+    <div>
+      <div style=display: flex; align-items: center; gap: 0.75rem;>
+        <h1 style=margin: 0; font-size: 1.75rem;>Delivery: <%= item.produce.receiptNo || ('REC-' + item.produce.id) %></h1>
+        <% if (item.produce.status === 'verified') { %>
+          <span class=badge style=background: #10b981; font-size: 0.9rem;>✅ Verified</span>
+        <% } else if (item.produce.status === 'rejected') { %>
+          <span class=badge style=background: #ef4444; font-size: 0.9rem;>❌ Rejected</span>
+        <% } else { %>
+          <span class=badge style=background: #f59e0b; font-size: 0.9rem;>⏳ Pending Review</span>
+        <% } %>
+      </div>
+      <p style=color: var(--text-muted); margin: 0.25rem 0 0 0;>
+        Recorded on <%= formatDate(item.produce.createdAt) %> for <strong><%= item.member.firstName %> <%= item.member.lastName %></strong>
+      </p>
+    </div>
+
+    <div style=display: flex; gap: 0.5rem;>
+      <a href=/coffee class=btn btn-secondary btn-sm>&larr; Deliveries</a>
+      <a href=/coffee/scan class=btn btn-primary btn-sm>📷 Scan Another</a>
+      <button onclick=window.print() class=btn btn-secondary btn-sm>🖨️ Print</button>
+    </div>
+  </div>
+
+  <div class=grid grid-2 style=align-items: start; gap: 1.5rem;>
+    <!-- Produce Details & Financials -->
+    <div>
+      <div class=card style=margin-bottom: 1.5rem;>
+        <div class=card-title>Produce Delivery Particulars</div>
+
+        <div style=display: flex; flex-direction: column; gap: 0.75rem;>
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Farmer / Member:</span>
+            <strong>
+              <a href=/members/<%= item.member.id %>><%= item.member.firstName %> <%= item.member.lastName %></a>
+              (<%= item.member.memberNo %>)
+            </strong>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Factory Grower No:</span>
+            <strong><%= item.produce.factoryGrowerNo || 'N/A' %></strong>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Coffee Factory:</span>
+            <strong><%= item.produce.factoryName || 'N/A' %></strong>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Cooperative Society:</span>
+            <strong><%= item.produce.societyName || 'N/A' %></strong>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Delivery Date:</span>
+            <strong><%= formatDate(item.produce.receiptDate) %></strong>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Gross Weight:</span>
+            <span><%= item.produce.grossKg.toFixed(1) %> KG</span>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Tare Weight:</span>
+            <span><%= (item.produce.tareKg || 0).toFixed(1) %> KG</span>
+          </div>
+
+          <div style=display: flex; justify-content: space-between; padding-top: 0.25rem;>
+            <span style=font-size: 1.1rem; font-weight: 600;>Net Coffee Produce:</span>
+            <strong style=font-size: 1.35rem; color: #38bdf8;><%= item.produce.netKg.toFixed(1) %> KG</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Value Card -->
+      <div class=card style=margin-bottom: 1.5rem;>
+        <div class=card-title>Estimated Produce Payout</div>
+
+        <div style=display: flex; flex-direction: column; gap: 0.75rem;>
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Rate per KG:</span>
+            <span><%= item.produce.ratePerKgCents ? formatMoney(item.produce.ratePerKgCents) : 'Market rate pending' %></span>
+          </div>
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Gross Payout Value:</span>
+            <strong style=color: #34d399;><%= item.produce.grossAmountCents ? formatMoney(item.produce.grossAmountCents) : '-' %></strong>
+          </div>
+          <div style=display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;>
+            <span style=color: var(--text-muted);>Society Deductions / Cess:</span>
+            <span><%= item.produce.deductionsCents ? formatMoney(item.produce.deductionsCents) : '-' %></span>
+          </div>
+          <div style=display: flex; justify-content: space-between; padding-top: 0.25rem;>
+            <span style=font-weight: 600;>Estimated Net Farmer Payout:</span>
+            <strong style=font-size: 1.15rem; color: #34d399;><%= item.produce.netPayoutCents ? formatMoney(item.produce.netPayoutCents) : '-' %></strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Verification Controls -->
+      <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
+        <div class=card>
+          <div class=card-title>Staff Verification & Approval</div>
+          
+          <% if (item.produce.status === 'pending_verification') { %>
+            <p style=color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;>
+              Review the scanned receipt photo on the right. Once verified against society records, approve the delivery.
+            </p>
+
+            <form action=/coffee/<%= item.produce.id %>/verify method=POST style=margin: 0; display: flex; flex-direction: column; gap: 0.75rem;>
+              <input type=hidden name=_csrf value=<%= csrfToken %>>
+              
+              <div class=form-group style=margin-bottom: 0;>
+                <label class=form-label for=notes>Verification Notes (Optional)</label>
+                <input type=text id=notes name=notes class=form-control placeholder=e.g. Verified with factory cherry book>
+              </div>
+
+              <div style=display: flex; gap: 0.75rem;>
+                <button type=submit name=status value=verified class=btn btn-primary style=flex: 1;>
+                  ✅ Approve & Verify Delivery
+                </button>
+                <button type=submit name=status value=rejected class=btn btn-secondary style=color: #f87171; border-color: rgba(248, 113, 113, 0.4);>
+                  ❌ Reject
+                </button>
+              </div>
+            </form>
+          <% } else { %>
+            <div style=font-size: 0.9rem;>
+              Delivery status is <strong><%= item.produce.status.toUpperCase() %></strong>.
+              <% if (item.produce.verifiedAt) { %>
+                <div style=color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;>
+                  Verified on <%= formatDate(item.produce.verifiedAt) %>
+                </div>
+              <% } %>
+              <% if (item.produce.notes) { %>
+                <div style=margin-top: 0.5rem; padding: 0.5rem; background: rgba(255,255,255,0.04); border-radius: 4px;>
+                  <em><%= item.produce.notes %></em>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Scanned Receipt Image Card -->
+    <div class=card>
+      <div class=card-title>
+        <span>Scanned Receipt Photo</span>
+        <a href=<%= item.produce.receiptImagePath %> target=_blank class=btn btn-secondary btn-sm style=font-size: 0.75rem;>🔍 Full Size</a>
+      </div>
+
+      <div style=border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); background: #000; text-align: center;>
+        <img src=<%= item.produce.receiptImagePath %> alt=Scanned Coffee Receipt style=max-width: 100%; max-height: 500px; object-fit: contain; cursor: zoom-in; onclick=window.open('<%= item.produce.receiptImagePath %>', '_blank')>
+      </div>
+
+      <% if (item.produce.ocrRawText) { %>
+        <details style=margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);>
+          <summary style=cursor: pointer; padding: 0.25rem 0;>View Raw OCR Extracted Text</summary>
+          <pre style=background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 6px; white-space: pre-wrap; margin-top: 0.5rem; font-family: monospace; font-size: 0.75rem; max-height: 200px; overflow-y: auto;><%= item.produce.ocrRawText %></pre>
+        </details>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

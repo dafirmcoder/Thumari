@@ -27,7 +27,7 @@ describe('App HTTP & PWA endpoints', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('application/manifest+json');
     const json = JSON.parse(res.payload);
-    expect(json.name).toBe('Thumari SACCO');
+    expect(json.name).toBe("Thumari Men's Association");
     expect(json.display).toBe('standalone');
     expect(json.icons.length).toBeGreaterThanOrEqual(3);
   });
@@ -63,5 +63,40 @@ describe('App HTTP & PWA endpoints', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.payload).toContain('Download Android APK');
+  });
+
+  it('serves the favicon correctly', async () => {
+    const res = await appInstance.inject({
+      method: 'GET',
+      url: '/favicon.ico',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toBe('image/png');
+  });
+
+  it('redirects unauthenticated users from reports and coffee produce to login', async () => {
+    const resMonthly = await appInstance.inject({
+      method: 'GET',
+      url: '/reports/contributions-monthly',
+    });
+    expect(resMonthly.statusCode).toBe(302);
+    expect(resMonthly.headers.location).toContain('/login');
+
+    const resCoffee = await appInstance.inject({
+      method: 'GET',
+      url: '/coffee',
+    });
+    expect(resCoffee.statusCode).toBe(302);
+    expect(resCoffee.headers.location).toContain('/login');
+  });
+
+  it('redirects unauthenticated users on coffee produce report', async () => {
+    const res = await appInstance.inject({
+      method: 'GET',
+      url: '/reports/coffee-produce?year=2026',
+    });
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toContain('/login');
   });
 });

@@ -7,7 +7,7 @@ export interface CurrencyFormatOptions {
 }
 
 export function formatMoney(cents: number, opts: CurrencyFormatOptions = {}): string {
-  const symbol = opts.symbol ?? 'TSh';
+  const symbol = opts.symbol ?? 'KES';
   const locale = safeLocale(opts.locale);
   const units = cents / 100;
   

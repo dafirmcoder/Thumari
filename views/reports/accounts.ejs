@@ -1,0 +1,205 @@
+<%- include('../partials/head.ejs', { title: 'Financial Accounts Statement' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="margin: 0; font-size: 1.75rem;">?? Financial Accounts & Income Statement</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">
+      Consolidated accounting report: Member Contributions, Group Project Revenues & Categorized Operating Expenses
+    </p>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="/reports/accounts/export?year=<%= selectedYear %><%= selectedMonth ? '&month=' + selectedMonth : '' %>" class="btn btn-primary btn-sm">?? Export CSV</a>
+    <button onclick="window.print()" class="btn btn-secondary btn-sm">??? Print Statement</button>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+  <form method="GET" action="/reports/accounts" style="margin: 0; display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+    <div style="width: 140px;">
+      <label class="form-label" style="margin-bottom: 0.25rem;">Fiscal Year</label>
+      <input type="number" name="year" class="form-control" value="<%= selectedYear %>" min="2020" max="2035" onchange="this.form.submit()">
+    </div>
+
+    <div style="width: 180px;">
+      <label class="form-label" style="margin-bottom: 0.25rem;">Month (Optional)</label>
+      <select name="month" class="form-control" onchange="this.form.submit()">
+        <option value="">-- Full Year (Annual) --</option>
+        <% const mNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; %>
+        <% for (let i = 1; i <= 12; i++) { %>
+          <option value="<%= i %>" <%= selectedMonth == i ? 'selected' : '' %>><%= mNames[i - 1] %></option>
+        <% } %>
+      </select>
+    </div>
+
+    <div>
+      <a href="/reports/accounts" class="btn btn-secondary btn-sm" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Financial Summary Stat Boxes -->
+<div class="grid grid-4" style="margin-bottom: 1.5rem;">
+  <div class="stat-box">
+    <div class="stat-label">Total Revenue Inflows</div>
+    <div class="stat-value" style="color: #34d399;"><%= formatMoney(report.inflows.totalInflowsCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Operating Expenses</div>
+    <div class="stat-value" style="color: #ef4444;"><%= formatMoney(report.outflows.totalOperatingExpensesCents) %></div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Net Operating Surplus</div>
+    <div class="stat-value" style="color: <%= report.netOperatingSurplusCents >= 0 ? '#38bdf8' : '#ef4444' %>;">
+      <%= formatMoney(report.netOperatingSurplusCents) %>
+    </div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Net Cash Flow</div>
+    <div class="stat-value" style="color: <%= report.netCashFlowCents >= 0 ? '#10b981' : '#f59e0b' %>;">
+      <%= formatMoney(report.netCashFlowCents) %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+  <!-- Revenue Inflows Breakdown -->
+  <div class="card">
+    <div class="card-title">
+      <span>?? Revenue & Capital Inflows</span>
+      <span style="color: #34d399; font-weight: 700;"><%= formatMoney(report.inflows.totalInflowsCents) %></span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <!-- Member Contributions -->
+      <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.35rem;">
+          <span>?? Member Contributions (Total):</span>
+          <span style="color: #34d399;"><%= formatMoney(report.inflows.totalContributionsCents) %></span>
+        </div>
+        <% for (const c of report.inflows.contributionsByType) { %>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); padding: 0.15rem 0 0.15rem 1rem;">
+            <span>• <%= c.name %> (<%= c.kind %>):</span>
+            <span><%= formatMoney(c.totalCents) %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Project Incomes -->
+      <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.35rem;">
+          <span>??? Group Commercial Projects (Total):</span>
+          <span style="color: #34d399;"><%= formatMoney(report.inflows.totalProjectIncomesCents) %></span>
+        </div>
+        <% if (report.inflows.projectIncomesByProject.length === 0) { %>
+          <div style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1rem;">No project incomes in this period.</div>
+        <% } %>
+        <% for (const p of report.inflows.projectIncomesByProject) { %>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); padding: 0.15rem 0 0.15rem 1rem;">
+            <span>• <%= p.projectName %>:</span>
+            <span><%= formatMoney(p.totalCents) %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Fines and Loan Repayments -->
+      <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.25rem 0;">
+        <span>?? Fines & Disciplinary Penalties:</span>
+        <span><%= formatMoney(report.inflows.finesCollectedCents) %></span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.25rem 0;">
+        <span>?? Loan Repayments Received:</span>
+        <span><%= formatMoney(report.inflows.loanInterestRepaymentsCents) %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expenditures Outflows Breakdown -->
+  <div class="card">
+    <div class="card-title">
+      <span>?? Expenditures & Outflows</span>
+      <span style="color: #ef4444; font-weight: 700;"><%= formatMoney(report.outflows.totalOperatingExpensesCents) %></span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.35rem;">
+          <span>?? Operating Expenses by Category:</span>
+          <span style="color: #ef4444;"><%= formatMoney(report.outflows.totalOperatingExpensesCents) %></span>
+        </div>
+        <% if (report.outflows.expensesByCategory.length === 0) { %>
+          <div style="font-size: 0.85rem; color: var(--text-muted); padding-left: 1rem;">No operating expenses recorded in this period.</div>
+        <% } %>
+        <% for (const e of report.outflows.expensesByCategory) { %>
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); padding: 0.15rem 0 0.15rem 1rem;">
+            <span>• <%= e.category %> (<%= e.count %> transactions):</span>
+            <span style="color: #ef4444;"><%= formatMoney(e.totalCents) %></span>
+          </div>
+        <% } %>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.25rem 0;">
+        <span>??? Direct Project Capital Expenditures:</span>
+        <span><%= formatMoney(report.outflows.projectDirectExpensesCents) %></span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.25rem 0;">
+        <span>?? Loans Disbursed to Members:</span>
+        <span><%= formatMoney(report.outflows.loansDisbursedCents) %></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 12-Month Financial Statement Matrix -->
+<div class="card">
+  <div class="card-title">
+    <span>?? Monthly Accounts & Cashflow Statement (<%= selectedYear %>)</span>
+  </div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th style="text-align: right;">Member Contributions</th>
+          <th style="text-align: right;">Project Incomes</th>
+          <th style="text-align: right; color: #34d399;">Total Inflows (KES)</th>
+          <th style="text-align: right; color: #ef4444;">Expenses (KES)</th>
+          <th style="text-align: right; color: #38bdf8; font-weight: 700;">Net Surplus (KES)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const m of report.monthlyTrend) { %>
+          <tr>
+            <td><strong><%= m.monthName %></strong></td>
+            <td style="text-align: right;"><%= formatMoney(m.contributionsCents) %></td>
+            <td style="text-align: right;"><%= formatMoney(m.projectIncomesCents) %></td>
+            <td style="text-align: right; color: #34d399; font-weight: 600;"><%= formatMoney(m.totalInflowsCents) %></td>
+            <td style="text-align: right; color: #ef4444;"><%= formatMoney(m.operatingExpensesCents) %></td>
+            <td style="text-align: right; font-weight: 700; color: <%= m.netSurplusCents >= 0 ? '#38bdf8' : '#ef4444' %>;">
+              <%= formatMoney(m.netSurplusCents) %>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+      <tfoot>
+        <tr style="background: rgba(15,23,42,0.6); font-weight: 700; font-size: 1rem;">
+          <td>FULL YEAR TOTALS</td>
+          <td style="text-align: right;"><%= formatMoney(report.inflows.totalContributionsCents) %></td>
+          <td style="text-align: right;"><%= formatMoney(report.inflows.totalProjectIncomesCents) %></td>
+          <td style="text-align: right; color: #34d399;"><%= formatMoney(report.inflows.totalInflowsCents) %></td>
+          <td style="text-align: right; color: #ef4444;"><%= formatMoney(report.outflows.totalOperatingExpensesCents) %></td>
+          <td style="text-align: right; color: <%= report.netOperatingSurplusCents >= 0 ? '#38bdf8' : '#ef4444' %>; font-size: 1.1rem;">
+            <%= formatMoney(report.netOperatingSurplusCents) %>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>

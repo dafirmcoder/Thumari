@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyFormbody from '@fastify/formbody';
+import fastifyMultipart from '@fastify/multipart';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
@@ -19,10 +20,14 @@ import { registerAuthRoutes } from './routes/auth.js';
 import { registerDashboardRoutes } from './routes/dashboard.js';
 import { registerMemberRoutes } from './routes/members.js';
 import { registerContributionRoutes } from './routes/contributions.js';
+import { registerCoffeeRoutes } from './routes/coffee.js';
 import { registerLoanRoutes } from './routes/loans.js';
 import { registerMeetingRoutes } from './routes/meetings.js';
 import { registerNotificationRoutes } from './routes/notifications.js';
 import { registerReportRoutes } from './routes/reports.js';
+import { registerExpenseRoutes } from './routes/expenses.js';
+import { registerProjectRoutes } from './routes/projects.js';
+import { registerDividendRoutes } from './routes/dividends.js';
 import { registerDownloadRoutes } from './routes/download.js';
 import { registerPwaRoutes } from './routes/pwa.js';
 
@@ -68,6 +73,14 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
   await app.register(fastifyFormbody);
 
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 15 * 1024 * 1024, // 15 MB receipt image max
+      files: 1,
+    },
+    attachFieldsToBody: false,
+  });
+
   // Serve static files from /static/
   await app.register(fastifyStatic, {
     root: PUBLIC_DIR,
@@ -92,6 +105,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   registerDashboardRoutes(app, handle.db, config);
   registerMemberRoutes(app, handle.db, config);
   registerContributionRoutes(app, handle.db, config, queue);
+  registerCoffeeRoutes(app, handle.db, config, queue);
+  registerExpenseRoutes(app, handle.db, config);
+  registerProjectRoutes(app, handle.db, config);
+  registerDividendRoutes(app, handle.db, config);
   registerLoanRoutes(app, handle.db, config, queue);
   registerMeetingRoutes(app, handle.db, config, queue);
   registerNotificationRoutes(app, handle.db, config, queue);

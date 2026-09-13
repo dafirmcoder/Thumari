@@ -17,12 +17,12 @@ const configSchema = z.object({
   databaseFile: z.string().default(path.join(DATA_DIR, 'thumari.sqlite3')),
   sessionSecret: z.string().min(16).default('development-session-secret-must-be-changed-in-production-12345'),
   org: z.object({
-    name: z.string().default('Thumari SACCO'),
-    tagline: z.string().default('Empowering Community Savings and Investments'),
-    currency: z.string().default('TZS'),
-    currencySymbol: z.string().default('TSh'),
-    timezone: z.string().default('Africa/Dar_es_Salaam'),
-    locale: z.string().default('en-GB'),
+    name: z.string().default("Thumari Men's Association"),
+    tagline: z.string().default('Kirinyaga County • Unity. Farming. Fellowship.'),
+    currency: z.string().default('KES'),
+    currencySymbol: z.string().default('KES'),
+    timezone: z.string().default('Africa/Nairobi'),
+    locale: z.string().default('en-KE'),
   }),
   vapid: z.object({
     publicKey: z.string().optional().default(''),

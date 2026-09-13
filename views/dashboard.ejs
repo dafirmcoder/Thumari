@@ -1,15 +1,18 @@
 <%- include('partials/head.ejs', { title: 'Dashboard' }) %>
 <%- include('partials/nav.ejs') %>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
   <div>
-    <h1 style="margin: 0; font-size: 1.75rem;">Group Dashboard</h1>
-    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Overview of <%= org.name %> financial activities</p>
+    <h1 style="margin: 0; font-size: 1.75rem;"><%= org.name %> Dashboard</h1>
+    <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;"><%= org.tagline %></p>
   </div>
 
-  <div style="display: flex; gap: 0.5rem;">
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="/coffee/scan" class="btn btn-primary btn-sm">📷 Scan Coffee Receipt</a>
+    <a href="/reports/contributions-monthly" class="btn btn-secondary btn-sm">📊 Monthly Summary</a>
+    <a href="/reports/contributions-annual" class="btn btn-secondary btn-sm">📅 Annual Matrix</a>
     <% if (['admin', 'treasurer'].includes(currentUser.role)) { %>
-      <a href="/contributions/new" class="btn btn-primary btn-sm">+ Record Contribution</a>
+      <a href="/contributions/new" class="btn btn-secondary btn-sm">+ Contribution</a>
     <% } %>
     <a href="/loans/new" class="btn btn-secondary btn-sm">+ Apply Loan</a>
   </div>

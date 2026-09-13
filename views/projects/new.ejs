@@ -1,0 +1,61 @@
+<%- include('../partials/head.ejs', { title: 'Register Group Project' }) %>
+<%- include('../partials/nav.ejs') %>
+
+<div style="max-width: 680px; margin: 1.5rem auto;">
+  <div class="card">
+    <div class="card-title">
+      <span>??? Register Commercial Group Project</span>
+      <a href="/projects" style="font-size: 0.85rem;">&larr; Back</a>
+    </div>
+
+    <form action="/projects" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="name">Project Name *</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Fertilizer Bulk Distribution 2026" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="code">Unique Project Code *</label>
+          <input type="text" id="code" name="code" class="form-control" placeholder="e.g. FERT-2026, HONEY-01" style="text-transform: uppercase;" required>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label" for="targetBudget">Target Capital / Budget (KES)</label>
+          <input type="number" id="targetBudget" name="targetBudget" class="form-control" placeholder="e.g. 250000" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="startDate">Launch / Start Date</label>
+          <input type="date" id="startDate" name="startDate" class="form-control" value="<%= toDateInput(new Date()) %>">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="status">Project Status</label>
+        <select id="status" name="status" class="form-control">
+          <option value="planning">Planning & Capital Raising</option>
+          <option value="active" selected>Active & Operating</option>
+          <option value="completed">Completed</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Project Description & Objectives</label>
+        <textarea id="description" name="description" class="form-control" rows="3" placeholder="Explain the revenue model, distribution channels, member benefits..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <a href="/projects" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Register Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/foot.ejs') %>
