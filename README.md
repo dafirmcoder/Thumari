@@ -74,6 +74,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Production Deployment
+
+Thumari runs as a persistent Fastify server and should be deployed as a Node web service, not as a serverless function. A Render blueprint is included in `render.yaml`; create a Render service from this repository and enter the `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `PUBLIC_BASE_URL` values when prompted. The blueprint mounts persistent storage at `/var/data` for the SQLite database.
+
 **Default Admin Credentials:**
 - **Email:** `admin@thumari.local`
 - **Password:** `Admin@12345`
