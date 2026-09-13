@@ -23,7 +23,7 @@ function resolveDatabaseTarget(env: Record<string, string | undefined>): string 
   if (isSupportedDatabaseTarget(env.DATABASE_URL)) return env.DATABASE_URL;
 
   const configuredFile = env.DATABASE_FILE;
-  if (env.VERCEL && configuredFile && !path.isAbsolute(configuredFile) && !configuredFile.startsWith('file:')) {
+  if (env.VERCEL && configuredFile && !configuredFile.startsWith('/tmp/') && !configuredFile.startsWith('file:/tmp/')) {
     return undefined;
   }
 
