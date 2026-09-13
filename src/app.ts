@@ -13,6 +13,7 @@ import { NotificationQueue } from './services/notifications/queue.js';
 import { configureWebPush } from './services/notifications/sender.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerCsrf } from './plugins/csrf.js';
+import { registerSupabaseSessionRefresh } from './lib/supabase/middleware.js';
 import { VIEWS_DIR, PUBLIC_DIR } from './paths.js';
 
 // Import Routes
@@ -70,6 +71,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   await app.register(fastifyCookie, {
     secret: config.sessionSecret,
   });
+
+  registerSupabaseSessionRefresh(app);
 
   await app.register(fastifyFormbody);
 

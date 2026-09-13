@@ -4,6 +4,7 @@ import { DATA_DIR } from './paths.js';
 
 // Try loading .env if it exists
 try {
+  process.loadEnvFile?.('.env.local');
   process.loadEnvFile?.();
 } catch {
   // .env is optional
