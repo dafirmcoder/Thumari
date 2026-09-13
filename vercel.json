@@ -3,7 +3,6 @@
   "functions": {
     "api/index.ts": {
       "includeFiles": "views/**",
-      "memory": 1024,
       "maxDuration": 15
     }
   },
