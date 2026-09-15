@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseReceiptText, matchMemberByName } from '../src/lib/ocr-receipt.js';
-import type { Member } from '../src/db/schema.js';
+import type { Member } from '../src/types.js';
+
 
 describe('Coffee Receipt OCR & Extraction Parser', () => {
   const dummyMembers: Member[] = [
@@ -13,12 +14,12 @@ describe('Coffee Receipt OCR & Extraction Parser', () => {
       email: 'john@thumari.local',
       nationalId: '12345678',
       photoUrl: null,
-      joinDate: new Date(),
+      joinDate: '2024-01-15',
       status: 'active',
       exitDate: null,
       notes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: '2024-01-15T00:00:00Z',
+      updatedAt: '2024-01-15T00:00:00Z',
     },
     {
       id: 2,
@@ -29,13 +30,14 @@ describe('Coffee Receipt OCR & Extraction Parser', () => {
       email: 'sarah@thumari.local',
       nationalId: '87654321',
       photoUrl: null,
-      joinDate: new Date(),
+      joinDate: '2024-01-15',
       status: 'active',
       exitDate: null,
       notes: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: '2024-01-15T00:00:00Z',
+      updatedAt: '2024-01-15T00:00:00Z',
     },
+
   ];
 
   it('matches member by exact and token names', () => {

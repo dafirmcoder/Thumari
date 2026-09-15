@@ -130,19 +130,23 @@ export function fromDateInputValue(str: string, timeZone: string): Date | null {
   return zonedTimeToInstant({ year, month, day }, timeZone);
 }
 
-export function formatDate(date: Date | null | undefined, timeZone: string, locale = 'en-GB'): string {
+export function formatDate(date: Date | string | null | undefined, timeZone = 'Africa/Nairobi', locale = 'en-GB'): string {
   if (!date) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '—';
   const loc = safeLocale(locale);
   return new Intl.DateTimeFormat(loc, {
     timeZone,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  }).format(date);
+  }).format(d);
 }
 
-export function formatDateTime(date: Date | null | undefined, timeZone: string, locale = 'en-GB'): string {
+export function formatDateTime(date: Date | string | null | undefined, timeZone = 'Africa/Nairobi', locale = 'en-GB'): string {
   if (!date) return '—';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '—';
   const loc = safeLocale(locale);
   return new Intl.DateTimeFormat(loc, {
     timeZone,
@@ -152,8 +156,9 @@ export function formatDateTime(date: Date | null | undefined, timeZone: string, 
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).format(date);
+  }).format(d);
 }
+
 
 export function formatPeriodLabel(period: string, timeZone: string, locale = 'en-GB'): string {
   const start = periodKeyToStart(period, timeZone);

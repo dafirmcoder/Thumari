@@ -2,7 +2,8 @@
 
 **Thumari** is a modern, high-performance financial management platform engineered for savings groups, SACCOs, Chamas, and Welfare associations. It provides seamless member tracking, contribution accounting, loan amortization, meeting management, automated fines, and real-time push notifications.
 
-Thumari is built with **Node.js, TypeScript, and Fastify**, engineered from the ground up as an installable **Progressive Web App (PWA)** and a downloadable **Android APK (Trusted Web Activity - TWA)**.
+Thumari is built with **Vite, React 19, TypeScript, and `vite-plugin-pwa`**, engineered from the ground up as an installable **Progressive Web App (PWA)** and a downloadable **Android APK (Trusted Web Activity - TWA)**.
+
 
 ---
 
@@ -88,13 +89,12 @@ Thumari runs as a persistent Fastify server and should be deployed as a Node web
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Starts development server with live watch via `tsx` |
-| `npm run build` | Compiles TypeScript into production `dist/` bundle |
-| `npm start` | Runs the compiled production server |
+| `npm run dev` | Starts Vite development server with Hot Module Replacement |
+| `npm run build` | Compiles TypeScript and builds production PWA into `dist/` |
+| `npm run preview` | Previews the compiled production bundle locally |
 | `npm test` | Runs the automated Vitest test suite |
 | `npm run typecheck` | Validates TypeScript types across the codebase |
-| `npm run db:seed` | Seeds initial admin user, contribution types, and loan products |
-| `npm run vapid:generate` | Generates a fresh VAPID keypair for Web Push |
+
 
 ---
 

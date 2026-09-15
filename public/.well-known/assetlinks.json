@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.thumari.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0F:52:AB:E6:EC:65:C4:B8:BC:21:AE:B8:70:50:C0:79:02:4F:10:04:6D:4D:09:9B:0F:7B:6C:A5"
+      ]
+    }
+  }
+]

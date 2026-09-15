@@ -1,5 +1,5 @@
 import { createWorker } from 'tesseract.js';
-import type { Member } from '../db/schema.js';
+import type { Member } from '../types.js';
 
 export interface ExtractedReceiptData {
   rawText: string;
@@ -293,10 +293,17 @@ export function parseReceiptText(rawText: string, membersList: Member[] = []): E
 }
 
 export async function performReceiptOcr(
-  imagePathOrBuffer: string | Buffer,
+  imagePathOrBuffer: string | any,
   membersList: Member[] = [],
+  onProgress?: (progress: number, status: string) => void,
 ): Promise<ExtractedReceiptData> {
-  const worker = await createWorker('eng');
+  const worker = await createWorker('eng', 1, {
+    logger: (m: any) => {
+      if (onProgress && m.progress !== undefined) {
+        onProgress(m.progress, m.status || 'Processing...');
+      }
+    },
+  });
   try {
     const ret = await worker.recognize(imagePathOrBuffer);
     const rawText = ret.data.text || '';
@@ -305,6 +312,9 @@ export async function performReceiptOcr(
     await worker.terminate();
   }
 }
+
+export const extractReceiptData = performReceiptOcr;
+
 
 function parseDateString(str: string): string | null {
   try {

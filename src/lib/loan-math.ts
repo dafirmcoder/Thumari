@@ -1,4 +1,6 @@
-import type { InterestMethod, InstallmentStatus } from '../db/schema.js';
+export type InterestMethod = 'flat' | 'reducing';
+export type InstallmentStatus = 'pending' | 'due' | 'paid' | 'overdue' | 'defaulted' | 'partial';
+
 
 export interface PaymentScheduleInput {
   principalCents: number;
@@ -12,7 +14,9 @@ export interface ComputedInstallment {
   principalCents: number;
   interestCents: number;
   totalCents: number;
+  remainingBalanceCents?: number;
 }
+
 
 export interface ScheduleCalculationResult {
   installments: ComputedInstallment[];

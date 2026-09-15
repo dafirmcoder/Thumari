@@ -1,102 +1,75 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { buildApp } from '../src/app.js';
-import { createDatabase, applyMigrations } from '../src/db/index.js';
+import { describe, it, expect } from 'vitest';
+import { store } from '../src/services/store.js';
+import { computeInstallments } from '../src/lib/loan-math.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
-describe('App HTTP & PWA endpoints', () => {
-  let appInstance: any;
+describe('Thumari Vite PWA App & Store', () => {
+  it('initializes store with default demo members and products', () => {
+    const members = store.getMembers();
+    expect(members.length).toBeGreaterThanOrEqual(5);
 
-  beforeAll(async () => {
-    const dbHandle = createDatabase(':memory:');
-    await applyMigrations(dbHandle.db);
-    const { app } = await buildApp({
-      dbHandle,
-      configOverrides: {
-        NODE_ENV: 'test',
-        PUBLIC_BASE_URL: 'http://localhost:3000',
-      },
-    });
-    appInstance = app;
+    const products = store.getLoanProducts();
+    expect(products.length).toBeGreaterThanOrEqual(3);
+
+    const kpis = store.getKPIs();
+    expect(kpis.activeMemberCount).toBeGreaterThanOrEqual(5);
+    expect(kpis.totalSavingsCents).toBeGreaterThan(0);
   });
 
-  it('serves dynamic PWA webmanifest with valid icons and scope', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/manifest.webmanifest',
+  it('records new member contributions and updates KPI savings', () => {
+    const initialSavings = store.getKPIs().totalSavingsCents;
+    const newContribution = store.addContribution({
+      memberId: 1,
+      typeId: 1, // savings
+      amountCents: 100000, // 1,000 KES
+      paidAt: new Date().toISOString(),
+      method: 'mpesa',
+      reference: 'TEST_REF_123',
     });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toContain('application/manifest+json');
-    const json = JSON.parse(res.payload);
-    expect(json.name).toBe("Thumari Men's Association");
-    expect(json.display).toBe('standalone');
-    expect(json.icons.length).toBeGreaterThanOrEqual(3);
+    expect(newContribution.id).toBeDefined();
+    const updatedSavings = store.getKPIs().totalSavingsCents;
+    expect(updatedSavings).toBe(initialSavings + 100000);
   });
 
-  it('serves service worker with Service-Worker-Allowed header', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/sw.js',
+  it('creates and records coffee produce deliveries', () => {
+    const produce = store.addCoffeeProduce({
+      memberId: 1,
+      deliveryDate: '2026-03-15',
+      receiptNo: 'RCP-TEST-999',
+      societyName: "Rung'eto Farmers Co-op",
+      factoryName: 'Kii Factory',
+      growerNo: 'FCS-0142',
+      grossKg: 205.0,
+      tareKg: 5.0,
+      netKg: 200.0,
+      ratePerKgCents: 12000,
+      payoutCents: 2400000,
+      verified: true,
     });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['service-worker-allowed']).toBe('/');
-    expect(res.payload).toContain('CACHE_NAME');
+    expect(produce.id).toBeDefined();
+    expect(produce.netKg).toBe(200.0);
+    expect(produce.payoutCents).toBe(2400000);
   });
 
-  it('serves .well-known/assetlinks.json for Android TWA verification', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/.well-known/assetlinks.json',
-    });
+  it('has assetlinks.json in public/.well-known for Android TWA', () => {
+    const assetlinksPath = path.join(process.cwd(), 'public', '.well-known', 'assetlinks.json');
+    expect(fs.existsSync(assetlinksPath)).toBe(true);
 
-    expect(res.statusCode).toBe(200);
-    const json = JSON.parse(res.payload);
-    expect(Array.isArray(json)).toBe(true);
-    expect(json[0].target.package_name).toBe('app.thumari.twa');
+    const content = JSON.parse(fs.readFileSync(assetlinksPath, 'utf8'));
+    expect(Array.isArray(content)).toBe(true);
+    expect(content[0].target.package_name).toBe('com.thumari.app');
   });
 
-  it('serves the APK download portal', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/download',
-    });
+  it('has index.html with PWA meta tags and manifest link', () => {
+    const indexPath = path.join(process.cwd(), 'index.html');
+    expect(fs.existsSync(indexPath)).toBe(true);
 
-    expect(res.statusCode).toBe(200);
-    expect(res.payload).toContain('Download Android APK');
-  });
-
-  it('serves the favicon correctly', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/favicon.ico',
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('image/png');
-  });
-
-  it('redirects unauthenticated users from reports and coffee produce to login', async () => {
-    const resMonthly = await appInstance.inject({
-      method: 'GET',
-      url: '/reports/contributions-monthly',
-    });
-    expect(resMonthly.statusCode).toBe(302);
-    expect(resMonthly.headers.location).toContain('/login');
-
-    const resCoffee = await appInstance.inject({
-      method: 'GET',
-      url: '/coffee',
-    });
-    expect(resCoffee.statusCode).toBe(302);
-    expect(resCoffee.headers.location).toContain('/login');
-  });
-
-  it('redirects unauthenticated users on coffee produce report', async () => {
-    const res = await appInstance.inject({
-      method: 'GET',
-      url: '/reports/coffee-produce?year=2026',
-    });
-    expect(res.statusCode).toBe(302);
-    expect(res.headers.location).toContain('/login');
+    const html = fs.readFileSync(indexPath, 'utf8');
+    expect(html).toContain('manifest.webmanifest');
+    expect(html).toContain('theme-color');
+    expect(html).toContain('/src/main.tsx');
   });
 });
